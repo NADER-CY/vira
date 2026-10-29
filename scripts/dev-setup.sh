@@ -11,11 +11,17 @@ if [ ! -f .env ]; then
       -e "s|^APP_WORKER_PASSWORD=.*|APP_WORKER_PASSWORD=$(rand)|" \
       -e "s|^VIRA_ADMIN_TOTP_KEY=.*|VIRA_ADMIN_TOTP_KEY=$(openssl rand -base64 32)|" \
       -e "s|^MINIO_ROOT_PASSWORD=.*|MINIO_ROOT_PASSWORD=$(rand)|" \
+      -e "s|^VIRA_PII_ENC_KEY=.*|VIRA_PII_ENC_KEY=$(openssl rand -base64 32)|" \
+      -e "s|^VIRA_PII_INDEX_KEY=.*|VIRA_PII_INDEX_KEY=$(openssl rand -base64 32)|" \
       .env.example > .env
   chmod 600 .env
   echo "created .env"
 else
-  echo ".env exists — left unchanged"
+  # Add keys introduced after the file was created (never overwrites existing values).
+  for k in VIRA_PII_ENC_KEY VIRA_PII_INDEX_KEY; do
+    grep -q "^$k=" .env || echo "$k=$(openssl rand -base64 32)" >> .env
+  done
+  echo ".env exists — kept (missing keys added)"
 fi
 mkdir -p .data/jwt
 if [ ! -f .data/jwt/private.pem ]; then
