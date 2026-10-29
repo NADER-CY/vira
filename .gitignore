@@ -1,0 +1,53 @@
+# --- Secrets: never commit ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+key.properties
+secrets/
+**/google-services.json
+**/GoogleService-Info.plist
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# --- Go ---
+backend/bin/
+backend/coverage*.out
+*.test
+
+# --- Node / web ---
+node_modules/
+web/**/dist/
+web/**/coverage/
+web/**/test-results/
+web/**/playwright-report/
+*.tsbuildinfo
+
+# --- Flutter / Dart ---
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/coverage/
+mobile/**/Pods/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/app/debug/
+mobile/android/app/release/
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/ios/Runner/GeneratedPluginRegistrant.*
+
+# --- Local runtime data ---
+.data/
+tmp/
