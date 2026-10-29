@@ -1,0 +1,60 @@
+# Staging overlay (not deployed). Use together with deploy/compose/docker-compose.yml.
+x-staging-env: &staging-env
+  VIRA_ENV: staging
+  VIRA_LOG_LEVEL: info
+  VIRA_ADMIN_COOKIE_SECURE: "true"
+  VIRA_ALLOWED_ORIGINS: https://${VIRA_ADMIN_HOST},https://${VIRA_SELLER_HOST}
+  VIRA_PUBLIC_BASE_URL: https://${VIRA_API_HOST}
+
+services:
+  api:
+    ports: !reset []
+    environment: *staging-env
+  admin-api:
+    ports: !reset []
+    environment: *staging-env
+  worker:
+    ports: !reset []
+    environment: *staging-env
+  realtime:
+    ports: !reset []
+    environment: *staging-env
+  media:
+    ports: !reset []
+    environment: *staging-env
+  migrate:
+    environment:
+      VIRA_ENV: staging
+  devsim:
+    ports: !reset []
+    environment:
+      VIRA_ENV: staging
+  postgres:
+    ports: !reset []
+  pgbouncer:
+    ports: !reset []
+  valkey:
+    ports: !reset []
+  nats:
+    ports: !reset []
+  minio:
+    ports: !reset []
+  mailpit:
+    ports: !reset []
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      VIRA_API_HOST: ${VIRA_API_HOST}
+      VIRA_ADMIN_HOST: ${VIRA_ADMIN_HOST}
+      VIRA_SELLER_HOST: ${VIRA_SELLER_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../../web/admin/dist:/srv/admin:ro
+      - ../../web/seller/dist:/srv/seller:ro
+      - caddydata:/data
+    depends_on: [api, admin-api]
+
+volumes:
+  caddydata:
