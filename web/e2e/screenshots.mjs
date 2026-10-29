@@ -33,7 +33,9 @@ const roles = { data: [
 ] };
 
 function serve(dir, port) {
-  const p = spawn("npx", ["vite", "preview", "--port", String(port), "--strictPort"], { cwd: dir, stdio: "pipe" });
+  // Own process group so the whole preview server can be stopped (npx would leave vite running).
+  const p = spawn(process.execPath, ["../node_modules/vite/bin/vite.js", "preview", "--port", String(port), "--strictPort"],
+    { cwd: dir, stdio: ["ignore", "pipe", "inherit"], detached: true });
   return new Promise((resolve, reject) => {
     p.stdout.on("data", (d) => { if (String(d).includes(String(port))) resolve(p); });
     p.on("exit", (c) => reject(new Error(`preview ${dir} exited ${c}`)));
@@ -52,7 +54,8 @@ async function shoot(browser, scheme, url, file, routes, init) {
     return route.fulfill(r ? json(...r) : json({ code: "not_found", status: 404, title: "یافت نشد" }, 404));
   });
   const page = await ctx.newPage();
-  await page.goto(url, { waitUntil: "networkidle" });
+  await page.goto(url, { waitUntil: "load", timeout: 30_000 });
+  await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
   await page.waitForTimeout(400);
   await page.screenshot({ path: `${out}/${file}-${scheme}.png`, fullPage: false });
   await ctx.close();
@@ -77,6 +80,8 @@ try {
   console.log("screenshots written to", out);
 } finally {
   await browser.close();
-  adminSrv.kill();
-  sellerSrv.kill();
+  for (const srv of [adminSrv, sellerSrv]) {
+    try { process.kill(-srv.pid, "SIGTERM"); } catch { /* already stopped */ }
+  }
 }
+process.exit(0);

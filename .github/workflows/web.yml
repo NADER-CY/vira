@@ -56,6 +56,7 @@ jobs:
         run: |
           if [ -f package-lock.json ]; then ../.github/scripts/run.sh "npm audit" npm audit --omit=dev --audit-level=high; fi
       - name: Screenshots of both shells (light and dark)
+        timeout-minutes: 10
         run: |
           npx playwright install --with-deps chromium
           ../.github/scripts/run.sh screenshots node e2e/screenshots.mjs ../evidence/web
@@ -67,6 +68,7 @@ jobs:
             web/seller/dist
           retention-days: 14
       - uses: actions/upload-artifact@v6
+        if: always()
         with:
           name: web-evidence
           path: |

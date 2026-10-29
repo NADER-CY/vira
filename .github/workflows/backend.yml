@@ -132,13 +132,17 @@ jobs:
       - name: Create a smoke-test Super Admin
         working-directory: .
         run: |
-          export VIRA_NEW_ADMIN_PASSWORD="$(openssl rand -hex 16)"
-          enr=$(docker compose --env-file .env -f deploy/compose/docker-compose.yml exec -T -e VIRA_NEW_ADMIN_PASSWORD admin-api \
+          set -o pipefail
+          pw="$(openssl rand -hex 16)"
+          echo "::add-mask::$pw"
+          enr=$(docker compose --env-file .env -f deploy/compose/docker-compose.yml exec -T -e VIRA_NEW_ADMIN_PASSWORD="$pw" admin-api \
                 admin-api create-admin -email smoke@vira.local -name Smoke -roles super_admin | tail -n1)
-          echo "::add-mask::$(echo "$enr" | jq -r .totp_secret)"
+          secret=$(echo "$enr" | jq -er .totp_secret)
+          echo "::add-mask::$secret"
+          VIRA_NEW_ADMIN_PASSWORD="$pw"
           echo "VIRA_SMOKE_ADMIN_EMAIL=smoke@vira.local" >> "$GITHUB_ENV"
           echo "VIRA_SMOKE_ADMIN_PASSWORD=$VIRA_NEW_ADMIN_PASSWORD" >> "$GITHUB_ENV"
-          echo "VIRA_SMOKE_TOTP_SECRET=$(echo "$enr" | jq -r .totp_secret)" >> "$GITHUB_ENV"
+          echo "VIRA_SMOKE_TOTP_SECRET=$secret" >> "$GITHUB_ENV"
       - name: End-to-end smoke test
         run: ../.github/scripts/run.sh smoke go run ./scripts/smoke
       - name: Migration status through the stack

@@ -33,6 +33,8 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Pinned minor: golden images are compared pixel-for-pixel.
+          flutter-version: 3.44.x
           cache: true
       - name: Toolchain
         run: flutter --version && dart --version

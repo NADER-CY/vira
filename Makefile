@@ -20,7 +20,7 @@ dev-logs:
 
 dev-admin:        ## create a local Super Admin: make dev-admin EMAIL=you@example.com (password from VIRA_NEW_ADMIN_PASSWORD)
 	@test -n "$$VIRA_NEW_ADMIN_PASSWORD" || (echo "set VIRA_NEW_ADMIN_PASSWORD"; exit 2)
-	$(COMPOSE) exec -T -e VIRA_NEW_ADMIN_PASSWORD admin-api admin-api create-admin -email "$(EMAIL)" -name "Local Admin" -roles super_admin | tail -n1
+	$(COMPOSE) exec -T -e VIRA_NEW_ADMIN_PASSWORD="$$VIRA_NEW_ADMIN_PASSWORD" admin-api admin-api create-admin -email "$(EMAIL)" -name "Local Admin" -roles super_admin | tail -n1
 
 migrate-status:
 	$(COMPOSE) run --rm migrate migrate status
