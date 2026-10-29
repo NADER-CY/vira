@@ -203,6 +203,8 @@ func defaultAddr(runtime string) string {
 		return ":8083"
 	case "media":
 		return ":8084"
+	case "devsim":
+		return ":8090"
 	default:
 		return ":8080"
 	}

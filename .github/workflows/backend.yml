@@ -112,3 +112,43 @@ jobs:
           test ! -s enabled.txt
           if psql -h localhost -U postgres -d vira -v ON_ERROR_STOP=1 -c "UPDATE platform.feature_flags SET enabled = true WHERE key = 'payments.real_money'"; then
             echo "regulated flag could be enabled"; exit 1; fi
+
+  stack:
+    name: dev-stack-smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Generate local .env and JWT keys
+        working-directory: .
+        run: ./scripts/dev-setup.sh
+      - name: docker compose up --wait (Postgres, PgBouncer, Valkey, NATS, MinIO, Mailpit, devsim, 5 runtimes)
+        run: .github/scripts/run.sh "compose up" docker compose --env-file .env -f deploy/compose/docker-compose.yml up -d --build --wait --wait-timeout 300
+        working-directory: .
+      - name: Create a smoke-test Super Admin
+        working-directory: .
+        run: |
+          export VIRA_NEW_ADMIN_PASSWORD="$(openssl rand -hex 16)"
+          enr=$(docker compose --env-file .env -f deploy/compose/docker-compose.yml exec -T -e VIRA_NEW_ADMIN_PASSWORD admin-api \
+                admin-api create-admin -email smoke@vira.local -name Smoke -roles super_admin | tail -n1)
+          echo "::add-mask::$(echo "$enr" | jq -r .totp_secret)"
+          echo "VIRA_SMOKE_ADMIN_EMAIL=smoke@vira.local" >> "$GITHUB_ENV"
+          echo "VIRA_SMOKE_ADMIN_PASSWORD=$VIRA_NEW_ADMIN_PASSWORD" >> "$GITHUB_ENV"
+          echo "VIRA_SMOKE_TOTP_SECRET=$(echo "$enr" | jq -r .totp_secret)" >> "$GITHUB_ENV"
+      - name: End-to-end smoke test
+        run: ../.github/scripts/run.sh smoke go run ./scripts/smoke
+      - name: Migration status through the stack
+        working-directory: .
+        run: docker compose --env-file .env -f deploy/compose/docker-compose.yml run --rm migrate migrate status
+      - name: Diagnostics on failure
+        if: failure()
+        working-directory: .
+        run: |
+          docker compose --env-file .env -f deploy/compose/docker-compose.yml ps -a > ps.txt 2>&1 || true
+          docker compose --env-file .env -f deploy/compose/docker-compose.yml logs --no-color --tail=40 > logs.txt 2>&1 || true
+          .github/scripts/run.sh "compose ps" bash -c "cat ps.txt; exit 1" || true
+          .github/scripts/run.sh "compose logs" bash -c "tail -n 170 logs.txt; exit 1" || true
