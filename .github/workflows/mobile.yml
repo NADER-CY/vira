@@ -96,6 +96,7 @@ jobs:
         run: |
           mkdir -p ../evidence/mobile
           cp -r test/goldens ../evidence/mobile/ 2>/dev/null || true
+          cp -r test/failures ../evidence/mobile/golden-failures 2>/dev/null || true
           cp pubspec.lock test-report.json apk.sha256 ../evidence/mobile/ 2>/dev/null || true
           if [ "${BOOTSTRAPPED:-0}" = 1 ]; then tar czf ../evidence/mobile/platforms.tgz android ios .metadata; fi
       - uses: actions/upload-artifact@v6

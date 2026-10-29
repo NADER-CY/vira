@@ -57,3 +57,4 @@ mobile/apk.sha256
 web/test-results/
 evidence/
 *.iml
+mobile/test/failures/
