@@ -18,7 +18,7 @@ defaults:
 
 jobs:
   build-test:
-    name: build-test
+    name: mobile-build-test
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -104,7 +104,7 @@ jobs:
           retention-days: 14
 
   evidence:
-    name: publish-evidence
+    name: mobile-evidence
     needs: build-test
     if: always() && needs.build-test.result != 'cancelled' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04

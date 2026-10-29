@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router";
+import { Navigate, Route, Routes, useLocation } from "react-router";
 import { AppShell, Button, EmptyState, ProtectedRoute, type NavGroup } from "@vira/shared";
 import { useAuth } from "./auth";
 import { LoginPage } from "./pages/LoginPage";
@@ -74,11 +74,17 @@ function Shell() {
   );
 }
 
+/** After sign-in, return to the page that required it (state set by ProtectedRoute). */
+function AfterLogin() {
+  const from = (useLocation().state as { from?: string } | null)?.from;
+  return <Navigate to={from && from !== "/login" ? from : "/"} replace />;
+}
+
 export function App() {
   const { status } = useAuth();
   return (
     <Routes>
-      <Route path="/login" element={status === "authenticated" ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/login" element={status === "authenticated" ? <AfterLogin /> : <LoginPage />} />
       <Route path="/*" element={<ProtectedRoute status={status}><Shell /></ProtectedRoute>} />
     </Routes>
   );

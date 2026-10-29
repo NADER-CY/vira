@@ -1,13 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { useLocation, useNavigate } from "react-router";
 import { ApiError, Button, Card, TextField, ThemeToggle, messageFor, toLatinDigits } from "@vira/shared";
 import { useAuth } from "../auth";
 
 /** Two-step admin sign-in: password, then TOTP (ADR-016). No "remember me"; sessions are short-lived. */
 export function LoginPage() {
   const { login, verifyMfa } = useAuth();
-  const nav = useNavigate();
-  const loc = useLocation();
   const [step, setStep] = useState<"password" | "totp">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,9 +24,8 @@ export function LoginPage() {
         setPassword("");
         setStep("totp");
       } else {
+        // On success the session becomes authenticated and the /login route redirects (App: AfterLogin).
         await verifyMfa(mfaToken, toLatinDigits(code));
-        const from = (loc.state as { from?: string } | null)?.from;
-        nav(from && from !== "/login" ? from : "/", { replace: true });
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.title : messageFor("internal_error"));
