@@ -36,7 +36,7 @@ String formatNumber(int n) {
     if (i > 0 && (digits.length - i) % 3 == 0) b.write('٬');
     b.write(digits[i]);
   }
-  return '${neg ? '⁦-⁩' : ''}${toPersianDigits(b.toString())}';
+  return '${neg ? '\u2066-\u2069' : ''}${toPersianDigits(b.toString())}';
 }
 
 /// Formats integer Rial as Toman ("۱۲٬۵۰۰ تومان"). Never rounds silently: a fractional Toman is shown.
@@ -63,7 +63,7 @@ String? normalizeIranMobile(String input) {
 
 /// Displays a mobile number as ۰۹۱۲ ۳۴۵ ۶۷۸۹ inside an LTR isolate.
 String formatIranMobile(String normalized) =>
-    '⁦${toPersianDigits('${normalized.substring(0, 4)} ${normalized.substring(4, 7)} ${normalized.substring(7)}')}⁩';
+    '\u2066${toPersianDigits('${normalized.substring(0, 4)} ${normalized.substring(4, 7)} ${normalized.substring(7)}')}\u2069';
 
 /// Jalali date in Persian, e.g. "۸ آبان ۱۴۰۵". [d] is converted to Tehran time (UTC+03:30, no DST since 2022).
 String formatJalaliDate(DateTime d) {
@@ -91,4 +91,4 @@ String formatRelative(DateTime d, {DateTime? now}) {
 }
 
 /// Wraps a left-to-right fragment (usernames, codes, Latin product names) in first-strong isolates.
-String isolate(String s) => '⁨$s⁩';
+String isolate(String s) => '\u2068$s\u2069';

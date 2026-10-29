@@ -35,7 +35,7 @@ export function formatToman(rial: number | bigint): string {
   const frac = abs % 10n;
   let s = groupFmt.format(whole);
   if (frac !== 0n) s += "٫" + toPersianDigits(frac.toString());
-  return `${neg ? "⁦-⁩" : ""}${s} تومان`;
+  return `${neg ? "\u2066-\u2069" : ""}${s} تومان`;
 }
 
 const jalaliDate = new Intl.DateTimeFormat("fa-IR-u-ca-persian", { year: "numeric", month: "long", day: "numeric" });
@@ -68,5 +68,5 @@ export function formatRelative(d: Date | string, now: Date = new Date()): string
 
 /** Wraps a left-to-right fragment (IDs, e-mail, codes, Latin names) in Unicode isolates (FSI…PDI). */
 export function isolate(s: string): string {
-  return `⁨${s}⁩`;
+  return `\u2068${s}\u2069`;
 }

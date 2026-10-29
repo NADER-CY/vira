@@ -2,6 +2,7 @@
   "name": "vira-web",
   "private": true,
   "description": "VIRA web workspace: Super Admin (admin), Seller Admin (seller) and shared design system (shared).",
+  "type": "module",
   "workspaces": [
     "shared",
     "admin",

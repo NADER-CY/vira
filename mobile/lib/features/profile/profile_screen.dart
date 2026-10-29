@@ -33,7 +33,7 @@ class ProfileScreen extends ConsumerWidget {
           ]),
         ),
         const Divider(),
-        _Section('ظاهر'),
+        const _Section('ظاهر'),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: ViraTokens.space4),
           child: SegmentedButton<ThemeMode>(
@@ -47,14 +47,14 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: ViraTokens.space2),
-        _Section('حساب و خرید'),
+        const _Section('حساب و خرید'),
         const _Entry(Icons.receipt_long_outlined, 'سفارش‌های من', 'فاز ۷'),
         const _Entry(Icons.bookmark_border, 'ذخیره‌شده‌ها', 'فاز ۲'),
         const _Entry(Icons.verified_user_outlined, 'احراز هویت', 'فاز ۴'),
         const _Entry(Icons.account_balance_wallet_outlined, 'کیف پول', 'G1', locked: true),
-        _Section('فروشندگان'),
+        const _Section('فروشندگان'),
         const _Entry(Icons.storefront_outlined, 'مدیریت غرفهٔ من', 'فاز ۴'),
-        _Section('پشتیبانی'),
+        const _Section('پشتیبانی'),
         const _Entry(Icons.support_agent_outlined, 'راهنما و تیکت‌ها', 'فاز ۷'),
         Padding(
           padding: const EdgeInsets.all(ViraTokens.space4),

@@ -60,7 +60,7 @@ class ApiClient {
         'Accept': 'application/json',
         'Accept-Language': 'fa-IR',
         if (body != null) 'Content-Type': 'application/json',
-        if (idempotencyKey != null) 'Idempotency-Key': idempotencyKey,
+        'Idempotency-Key': ?idempotencyKey,
         if (token?.call() case final t?) 'Authorization': 'Bearer $t',
       });
     if (body != null) req.body = jsonEncode(body);

@@ -72,7 +72,7 @@ class ErrorView extends StatelessWidget {
     return EmptyView(
       icon: Icons.cloud_off_outlined,
       title: e?.title ?? messageFor('internal_error'),
-      message: e?.traceId != null ? 'کد پیگیری: ⁦${e!.traceId}⁩' : null,
+      message: e?.traceId != null ? 'کد پیگیری: \u2066${e!.traceId}\u2069' : null,
       action: onRetry == null ? null : OutlinedButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh), label: const Text('تلاش دوباره')),
     );
   }

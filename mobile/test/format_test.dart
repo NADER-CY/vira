@@ -56,7 +56,7 @@ void main() {
         expect(normalizeIranMobile(s), isNull, reason: s);
       }
     });
-    test('display', () => expect(formatIranMobile('09121234567'), '⁦۰۹۱۲ ۱۲۳ ۴۵۶۷⁩'));
+    test('display', () => expect(formatIranMobile('09121234567'), '\u2066۰۹۱۲ ۱۲۳ ۴۵۶۷\u2069'));
   });
 
   test('relative time', () {

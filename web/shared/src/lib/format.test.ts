@@ -24,6 +24,6 @@ describe("Persian formatting", () => {
   });
 
   it("isolates LTR fragments", () => {
-    expect(isolate("ORD-1")).toBe("⁨ORD-1⁩");
+    expect(isolate("ORD-1")).toBe("\u2068ORD-1\u2069");
   });
 });

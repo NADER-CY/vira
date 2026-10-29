@@ -25,8 +25,8 @@ export class ApiError extends Error {
     this.detail = typeof body.detail === "string" ? body.detail : undefined;
     this.fields = Array.isArray(body.errors) ? (body.errors as FieldError[]) : [];
     this.traceId = typeof body.trace_id === "string" ? body.trace_id : undefined;
-    const { type: _t, title: _ti, status: _s, code: _c, detail: _d, errors: _e, trace_id: _tr, instance: _i, ...extra } = body;
-    this.extra = extra;
+    const known = new Set(["type", "title", "status", "code", "detail", "errors", "trace_id", "instance"]);
+    this.extra = Object.fromEntries(Object.entries(body).filter(([k]) => !known.has(k)));
   }
 }
 

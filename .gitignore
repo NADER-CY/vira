@@ -56,3 +56,4 @@ mobile/test-report.json
 mobile/apk.sha256
 web/test-results/
 evidence/
+*.iml
