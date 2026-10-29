@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "VIRA Public API",
-    "version": "1.0.0-phase1",
-    "description": "Mobile app and seller web API (doc 07). Phase 1: platform surface only. Unsafe methods accept Idempotency-Key; money is integer Rial."
+    "version": "1.0.0-phase2",
+    "description": "Mobile app and seller web API (doc 07). Phase 2: identity, profiles, social graph, posts, feed, engagement, media, reports. Unsafe methods accept Idempotency-Key; money is integer Rial."
   },
   "servers": [
     {
@@ -148,6 +148,2991 @@
           }
         }
       }
+    },
+    "/v1/auth/otp": {
+      "post": {
+        "operationId": "requestOtp",
+        "tags": [
+          "auth"
+        ],
+        "summary": "Send a 6-digit sign-in code by SMS (never reveals whether the number has an account)",
+        "security": [],
+        "responses": {
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallenge"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (retry_after)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SMS provider unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/otp/verify": {
+      "post": {
+        "operationId": "verifyOtp",
+        "tags": [
+          "auth"
+        ],
+        "summary": "Verify the code; signs in or creates the account; issues tokens",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignIn"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "otp_invalid / otp_expired",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "account_restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "otp_locked or rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpVerifyRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/token/refresh": {
+      "post": {
+        "operationId": "refreshToken",
+        "tags": [
+          "auth"
+        ],
+        "summary": "Rotate the refresh token (a reused token revokes the session); devices with a key send X-Vira-PoP",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tokens"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (retry_after)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Vira-PoP",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "<unix seconds>.<base64url ECDSA P-256 signature of VIRA-REFRESH\\n<ts>\\n<refresh token>>"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refresh_token"
+                ],
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/recovery": {
+      "post": {
+        "operationId": "requestRecovery",
+        "tags": [
+          "auth"
+        ],
+        "summary": "File an account-recovery request for a lost number (foundation)",
+        "security": [],
+        "responses": {
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (retry_after)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "tags": [
+          "auth"
+        ],
+        "summary": "Revoke the current session",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Signed out"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/account": {
+      "get": {
+        "operationId": "getAccount",
+        "tags": [
+          "account"
+        ],
+        "summary": "Account status, masked phone, deletion date",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/sessions": {
+      "get": {
+        "operationId": "listSessions",
+        "tags": [
+          "account"
+        ],
+        "summary": "Active sessions (devices)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Session"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/sessions/{id}": {
+      "delete": {
+        "operationId": "revokeSession",
+        "tags": [
+          "account"
+        ],
+        "summary": "Sign out one device",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      }
+    },
+    "/v1/me/sessions/revoke-others": {
+      "post": {
+        "operationId": "revokeOtherSessions",
+        "tags": [
+          "account"
+        ],
+        "summary": "Sign out every other device",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/deletion": {
+      "post": {
+        "operationId": "requestDeletion",
+        "tags": [
+          "account"
+        ],
+        "summary": "Start the 30-day deletion grace period (signing in again cancels it)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "effective_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already requested",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/profile": {
+      "get": {
+        "operationId": "getMyProfile",
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Own profile with privacy settings and version",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Resource version for If-Match"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateMyProfile",
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Edit own profile (handle, name, bio, website, avatar)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Resource version for If-Match"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Version mismatch",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Current resource version (ETag)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileUpdate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/privacy": {
+      "get": {
+        "operationId": "getPrivacy",
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Privacy settings",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacySetting"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "setPrivacy",
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Replace privacy settings (making an account public approves pending requests)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacySetting"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacySetting"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/blocks": {
+      "get": {
+        "operationId": "listBlocks",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Accounts I blocked",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ListEntry"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/follow-requests": {
+      "get": {
+        "operationId": "listFollowRequests",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Pending follow requests to me",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ListEntry"
+                      }
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor from next_cursor"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ]
+      }
+    },
+    "/v1/me/follow-requests/{id}/approve": {
+      "post": {
+        "operationId": "approveFollowRequest",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Approve a follow request",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Requester user id"
+          }
+        ]
+      }
+    },
+    "/v1/me/follow-requests/{id}/decline": {
+      "post": {
+        "operationId": "declineFollowRequest",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Decline a follow request",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Requester user id"
+          }
+        ]
+      }
+    },
+    "/v1/me/followers/{id}": {
+      "delete": {
+        "operationId": "removeFollower",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Remove a follower",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      }
+    },
+    "/v1/users/search": {
+      "get": {
+        "operationId": "searchUsers",
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Find accounts by handle prefix",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Author"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/handles/{handle}": {
+      "get": {
+        "operationId": "getProfileByHandle",
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Public profile by handle",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Handle without @"
+          }
+        ]
+      }
+    },
+    "/v1/users/{id}": {
+      "get": {
+        "operationId": "getProfile",
+        "tags": [
+          "profiles"
+        ],
+        "summary": "Public profile by user id",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      }
+    },
+    "/v1/users/{id}/posts": {
+      "get": {
+        "operationId": "listUserPosts",
+        "tags": [
+          "posts"
+        ],
+        "summary": "A user's posts (private accounts: followers only)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Post"
+                      }
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor from next_cursor"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ]
+      }
+    },
+    "/v1/users/{id}/followers": {
+      "get": {
+        "operationId": "listFollowers",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Followers of a user",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ListEntry"
+                      }
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor from next_cursor"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ]
+      }
+    },
+    "/v1/users/{id}/following": {
+      "get": {
+        "operationId": "listFollowing",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Following of a user",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ListEntry"
+                      }
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor from next_cursor"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ]
+      }
+    },
+    "/v1/users/{id}/follow": {
+      "post": {
+        "operationId": "follow",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Follow (or request to follow a private account)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (retry_after)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "unfollow",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Unfollow or cancel a request",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      }
+    },
+    "/v1/users/{id}/block": {
+      "post": {
+        "operationId": "block",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Block (removes follows both ways; neither side sees the other)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Blocked"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "unblock",
+        "tags": [
+          "graph"
+        ],
+        "summary": "Unblock",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Unblocked"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      }
+    },
+    "/v1/feed/home": {
+      "get": {
+        "operationId": "homeFeed",
+        "tags": [
+          "feed"
+        ],
+        "summary": "Home feed (برای شما): visible posts, newest first",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Post"
+                      }
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor from next_cursor"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ]
+      }
+    },
+    "/v1/feed/following": {
+      "get": {
+        "operationId": "followingFeed",
+        "tags": [
+          "feed"
+        ],
+        "summary": "Following feed: followed accounts and own posts",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Post"
+                      }
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor from next_cursor"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ]
+      }
+    },
+    "/v1/posts": {
+      "post": {
+        "operationId": "createPost",
+        "tags": [
+          "posts"
+        ],
+        "summary": "Publish a post (text and/or up to 10 uploaded images)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Resource version for If-Match"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (retry_after)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "description": "Retries with the same key return the original response (doc 07 §1.3)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/posts/{id}": {
+      "get": {
+        "operationId": "getPost",
+        "tags": [
+          "posts"
+        ],
+        "summary": "Post detail",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Resource version for If-Match"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updatePost",
+        "tags": [
+          "posts"
+        ],
+        "summary": "Edit own post (caption, visibility)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Resource version for If-Match"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Version mismatch",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Current resource version (ETag)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostUpdate"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deletePost",
+        "tags": [
+          "posts"
+        ],
+        "summary": "Delete own post",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      }
+    },
+    "/v1/posts/{id}/like": {
+      "put": {
+        "operationId": "likePost",
+        "tags": [
+          "engagement"
+        ],
+        "summary": "Like (idempotent)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeState"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (retry_after)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "unlikePost",
+        "tags": [
+          "engagement"
+        ],
+        "summary": "Unlike (idempotent)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeState"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      }
+    },
+    "/v1/posts/{id}/comments": {
+      "get": {
+        "operationId": "listComments",
+        "tags": [
+          "engagement"
+        ],
+        "summary": "Comments, oldest first",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Comment"
+                      }
+                    },
+                    "next_cursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor from next_cursor"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "addComment",
+        "tags": [
+          "engagement"
+        ],
+        "summary": "Comment (honours the author's comments_from setting)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (retry_after)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "description": "Retries with the same key return the original response (doc 07 §1.3)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "body"
+                ],
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/comments/{id}": {
+      "delete": {
+        "operationId": "deleteComment",
+        "tags": [
+          "engagement"
+        ],
+        "summary": "Delete own comment, or any comment on own post",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      }
+    },
+    "/v1/media/images": {
+      "post": {
+        "operationId": "uploadImage",
+        "tags": [
+          "media"
+        ],
+        "summary": "Upload an image (JPEG/PNG/GIF/WebP ≤ 10 MB; re-encoded, metadata stripped)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadedImage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden / account restricted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (retry_after)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "purpose"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "post",
+                      "avatar"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/media/{id}": {
+      "get": {
+        "operationId": "getMedia",
+        "tags": [
+          "media"
+        ],
+        "summary": "Image bytes (visible to the uploader and to viewers of the post/profile)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "image/jpeg",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UUID"
+          }
+        ]
+      }
+    },
+    "/v1/reports": {
+      "post": {
+        "operationId": "fileReport",
+        "tags": [
+          "moderation"
+        ],
+        "summary": "Report a post, comment or account",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "state"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated or session revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (also: blocked or not visible)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (retry_after)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequest"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -192,6 +3177,9 @@
               "account_restricted",
               "mfa_required",
               "mfa_invalid",
+              "otp_invalid",
+              "otp_expired",
+              "otp_locked",
               "maintenance",
               "upgrade_required",
               "internal_error",
@@ -357,6 +3345,741 @@
           "expires_at": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "OtpRequest": {
+        "type": "object",
+        "required": [
+          "phone"
+        ],
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "Iranian mobile; Persian/Arabic/ASCII digits, with or without +98 / 0"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "login"
+            ]
+          }
+        }
+      },
+      "OtpChallenge": {
+        "type": "object",
+        "required": [
+          "challenge_id",
+          "expires_in",
+          "resend_after",
+          "code_length"
+        ],
+        "properties": {
+          "challenge_id": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer"
+          },
+          "resend_after": {
+            "type": "integer"
+          },
+          "code_length": {
+            "type": "integer",
+            "const": 6
+          }
+        }
+      },
+      "Device": {
+        "type": "object",
+        "required": [
+          "id",
+          "platform"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "android",
+              "ios",
+              "web"
+            ]
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "app_version": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "public_key": {
+            "type": "string",
+            "description": "base64 SPKI of a P-256 key held by the device (proof of possession)"
+          }
+        }
+      },
+      "Consents": {
+        "type": "object",
+        "required": [
+          "terms",
+          "privacy",
+          "age_confirmation",
+          "text_version"
+        ],
+        "description": "Explicit, unticked-by-default choices (doc 19 UC-5); all must be true",
+        "properties": {
+          "terms": {
+            "type": "boolean"
+          },
+          "privacy": {
+            "type": "boolean"
+          },
+          "age_confirmation": {
+            "type": "boolean"
+          },
+          "text_version": {
+            "type": "string",
+            "maxLength": 40
+          }
+        }
+      },
+      "OtpVerifyRequest": {
+        "type": "object",
+        "required": [
+          "challenge_id",
+          "code",
+          "device",
+          "consents"
+        ],
+        "properties": {
+          "challenge_id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "description": "6 digits (Persian digits accepted)"
+          },
+          "device": {
+            "$ref": "#/components/schemas/Device"
+          },
+          "intends_to_sell": {
+            "type": "boolean",
+            "description": "Account-type choice; seller onboarding is P4, same identity"
+          },
+          "consents": {
+            "$ref": "#/components/schemas/Consents"
+          }
+        }
+      },
+      "Tokens": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "refresh_token",
+          "session_id"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string",
+            "const": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          }
+        }
+      },
+      "SignIn": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tokens"
+          },
+          {
+            "type": "object",
+            "required": [
+              "user_id",
+              "handle",
+              "is_new"
+            ],
+            "properties": {
+              "user_id": {
+                "type": "string"
+              },
+              "handle": {
+                "type": "string"
+              },
+              "is_new": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "RecoveryRequest": {
+        "type": "object",
+        "required": [
+          "old_phone",
+          "new_phone"
+        ],
+        "properties": {
+          "old_phone": {
+            "type": "string"
+          },
+          "new_phone": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "Account": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "status",
+          "phone_masked"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "restricted",
+              "suspended",
+              "deletion_pending",
+              "deleted"
+            ]
+          },
+          "phone_masked": {
+            "type": "string"
+          },
+          "intends_to_sell": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deletion_effective_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "required": [
+          "id",
+          "platform",
+          "created_at",
+          "last_used_at",
+          "current"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "app_version": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_used_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "current": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Author": {
+        "type": "object",
+        "required": [
+          "id",
+          "handle",
+          "display_name",
+          "is_private"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "avatar_url": {
+            "type": "string",
+            "description": "API path of the avatar image"
+          },
+          "is_private": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Stats": {
+        "type": "object",
+        "required": [
+          "posts",
+          "followers",
+          "following"
+        ],
+        "properties": {
+          "posts": {
+            "type": "integer"
+          },
+          "followers": {
+            "type": "integer"
+          },
+          "following": {
+            "type": "integer"
+          }
+        }
+      },
+      "Relationship": {
+        "type": "object",
+        "required": [
+          "is_self",
+          "following",
+          "requested",
+          "follows_you",
+          "blocking"
+        ],
+        "properties": {
+          "is_self": {
+            "type": "boolean"
+          },
+          "following": {
+            "type": "boolean"
+          },
+          "requested": {
+            "type": "boolean"
+          },
+          "follows_you": {
+            "type": "boolean"
+          },
+          "blocking": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PrivacySetting": {
+        "type": "object",
+        "required": [
+          "is_private",
+          "comments_from",
+          "hide_like_counts"
+        ],
+        "properties": {
+          "is_private": {
+            "type": "boolean"
+          },
+          "comments_from": {
+            "type": "string",
+            "enum": [
+              "everyone",
+              "followers",
+              "nobody"
+            ]
+          },
+          "hide_like_counts": {
+            "type": "boolean"
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Preferences of later-phase features (story_replies_from, mentions_from, messages_from, live_comments_from, allow_product_tags, show_activity, allow_reshare), stored now and enforced when each feature ships"
+          }
+        }
+      },
+      "Profile": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Author"
+          },
+          {
+            "type": "object",
+            "required": [
+              "bio",
+              "website",
+              "stats",
+              "relationship",
+              "can_view_posts"
+            ],
+            "properties": {
+              "bio": {
+                "type": "string"
+              },
+              "website": {
+                "type": "string"
+              },
+              "stats": {
+                "$ref": "#/components/schemas/Stats"
+              },
+              "relationship": {
+                "$ref": "#/components/schemas/Relationship"
+              },
+              "can_view_posts": {
+                "type": "boolean"
+              },
+              "version": {
+                "type": "integer",
+                "description": "own profile only"
+              },
+              "privacy": {
+                "$ref": "#/components/schemas/PrivacySetting"
+              }
+            }
+          }
+        ]
+      },
+      "ProfileUpdate": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string",
+            "pattern": "^@?[A-Za-z0-9_.]{3,30}$"
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "website": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "avatar_media_id": {
+            "type": "string",
+            "description": "uploaded image (purpose avatar); empty string removes"
+          }
+        }
+      },
+      "FollowResult": {
+        "type": "object",
+        "required": [
+          "state"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "following",
+              "requested"
+            ]
+          }
+        }
+      },
+      "ListEntry": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Author"
+          },
+          {
+            "type": "object",
+            "required": [
+              "since",
+              "following"
+            ],
+            "properties": {
+              "since": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "following": {
+                "type": "boolean",
+                "description": "the viewer follows this account"
+              }
+            }
+          }
+        ]
+      },
+      "MediaInfo": {
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "width",
+          "height"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "width": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          }
+        }
+      },
+      "UploadedImage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MediaInfo"
+          },
+          {
+            "type": "object",
+            "required": [
+              "purpose"
+            ],
+            "properties": {
+              "purpose": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "PostInput": {
+        "type": "object",
+        "properties": {
+          "caption": {
+            "type": "string",
+            "maxLength": 2200
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "followers"
+            ]
+          },
+          "media_ids": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PostUpdate": {
+        "type": "object",
+        "properties": {
+          "caption": {
+            "type": "string",
+            "maxLength": 2200
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "followers"
+            ]
+          }
+        }
+      },
+      "Post": {
+        "type": "object",
+        "required": [
+          "id",
+          "author",
+          "caption",
+          "visibility",
+          "media",
+          "like_count",
+          "comment_count",
+          "viewer_liked",
+          "is_owner",
+          "comments_allowed",
+          "published_at",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/Author"
+          },
+          "caption": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "followers"
+            ]
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaInfo"
+            }
+          },
+          "like_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "null when the author hides like counts"
+          },
+          "comment_count": {
+            "type": "integer"
+          },
+          "viewer_liked": {
+            "type": "boolean"
+          },
+          "is_owner": {
+            "type": "boolean"
+          },
+          "comments_allowed": {
+            "type": "boolean"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "edited_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "viewer_follows_author": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LikeState": {
+        "type": "object",
+        "required": [
+          "liked",
+          "like_count"
+        ],
+        "properties": {
+          "liked": {
+            "type": "boolean"
+          },
+          "like_count": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "required": [
+          "id",
+          "post_id",
+          "author",
+          "body",
+          "created_at",
+          "can_delete",
+          "is_post_author"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "post_id": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/Author"
+          },
+          "body": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "can_delete": {
+            "type": "boolean"
+          },
+          "is_post_author": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ReportRequest": {
+        "type": "object",
+        "required": [
+          "target_type",
+          "target_id",
+          "reason"
+        ],
+        "properties": {
+          "target_type": {
+            "type": "string",
+            "enum": [
+              "post",
+              "comment",
+              "user"
+            ]
+          },
+          "target_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "spam",
+              "harassment",
+              "hate",
+              "violence",
+              "nudity",
+              "scam",
+              "counterfeit",
+              "misinformation",
+              "self_harm",
+              "other"
+            ]
+          },
+          "details": {
+            "type": "string",
+            "maxLength": 1000
           }
         }
       }
