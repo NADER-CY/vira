@@ -1,0 +1,12 @@
+{
+  "specversion": "1.0",
+  "id": "01a186f2-878a-7cee-8ff0-a8ee498002cb",
+  "source": "vira/platform",
+  "type": "vira.platform.flag_changed.v1",
+  "subject": "feature_flag/app.maintenance_mode",
+  "time": "2026-10-29T09:00:00Z",
+  "datacontenttype": "application/json",
+  "aggregateid": "app.maintenance_mode",
+  "aggregateversion": 2,
+  "data": { "key": "app.maintenance_mode", "enabled": false }
+}
