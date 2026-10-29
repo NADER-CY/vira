@@ -19,6 +19,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/NADER-CY/vira/backend/internal/platform/db"
 	"github.com/NADER-CY/vira/backend/internal/platform/migrate"
 	"github.com/NADER-CY/vira/backend/migrations"
 )
@@ -158,7 +159,9 @@ func (d *DB) Pool(role string) *pgxpool.Pool {
 	if p, ok := d.pools[role]; ok {
 		return p
 	}
-	p, err := pgxpool.New(context.Background(), d.URL(role))
+	// Same query mode as production behind PgBouncer (transaction pooling, no prepared-statement cache), so
+	// tests catch parameter-encoding differences between the extended and the simple protocol paths.
+	p, err := db.Open(context.Background(), db.Options{URL: d.URL(role), PgBouncer: true, AppName: "vira-test"})
 	if err != nil {
 		d.t.Fatalf("testdb: pool %s: %v", role, err)
 	}

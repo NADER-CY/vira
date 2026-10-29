@@ -51,8 +51,8 @@ func Enqueue(ctx context.Context, tx db.Tx, kind string, payload any, o Options)
 	}
 	id := ids.New()
 	_, err = tx.Exec(ctx, `INSERT INTO platform.jobs (id, kind, payload, max_attempts, run_at, unique_key)
-		VALUES ($1, $2, $3, $4, COALESCE($5::timestamptz, now()), NULLIF($6, ''))`,
-		id, kind, body, o.MaxAttempts, runAt, o.UniqueKey)
+		VALUES ($1, $2, $3::jsonb, $4, COALESCE($5::timestamptz, now()), NULLIF($6, ''))`,
+		id, kind, string(body), o.MaxAttempts, runAt, o.UniqueKey)
 	if db.IsUniqueViolation(err) {
 		return "", ErrDuplicate
 	}

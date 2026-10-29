@@ -50,8 +50,8 @@ func Write(ctx context.Context, tx db.Tx, e Event) (string, error) {
 	id := ids.New()
 	_, err = tx.Exec(ctx, `
 		INSERT INTO platform.outbox (event_id, module, aggregate_type, aggregate_id, aggregate_version, type, payload, traceparent)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''))`,
-		id, e.Module, e.AggregateType, e.AggregateID, e.AggregateVersion, e.Type, payload, e.Traceparent)
+		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, NULLIF($8, ''))`,
+		id, e.Module, e.AggregateType, e.AggregateID, e.AggregateVersion, e.Type, string(payload), e.Traceparent)
 	if err != nil {
 		return "", fmt.Errorf("outbox: insert: %w", err)
 	}

@@ -56,8 +56,8 @@ func Record(ctx context.Context, tx db.Tx, e Event) (string, error) {
 	id := ids.New()
 	_, err = tx.Exec(ctx, `INSERT INTO platform.audit_events
 		(id, actor_type, actor_id, action, target_type, target_id, outcome, ip, user_agent, trace_id, metadata)
-		VALUES ($1, $2, NULLIF($3,''), $4, NULLIF($5,''), NULLIF($6,''), $7, $8::inet, NULLIF($9,''), NULLIF($10,''), $11)`,
-		id, e.ActorType, e.ActorID, e.Action, e.TargetType, e.TargetID, e.Outcome, ip, truncate(e.UserAgent, 300), e.TraceID, meta)
+		VALUES ($1, $2, NULLIF($3,''), $4, NULLIF($5,''), NULLIF($6,''), $7, $8::inet, NULLIF($9,''), NULLIF($10,''), $11::jsonb)`,
+		id, e.ActorType, e.ActorID, e.Action, e.TargetType, e.TargetID, e.Outcome, ip, truncate(e.UserAgent, 300), e.TraceID, string(meta))
 	if err != nil {
 		return "", fmt.Errorf("audit: record: %w", err)
 	}

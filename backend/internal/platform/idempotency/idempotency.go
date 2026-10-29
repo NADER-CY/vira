@@ -233,8 +233,8 @@ func (m *Middleware) complete(ctx context.Context, principal, key string, rec *c
 	hj, _ := json.Marshal(hdr)
 	err := db.InTx(ctx, m.Pool, db.Scope{Audience: db.AudiencePublic, ActorID: principal}, db.TxOptions{}, func(tx db.Tx) error {
 		_, err := tx.Exec(ctx, `UPDATE platform.idempotency_keys SET state = $3, response_status = $4,
-			response_headers = $5, response_body = $6, lease_until = now()
-			WHERE principal_id = $1 AND key = $2`, principal, key, state, rec.status, hj, rec.buf.Bytes())
+			response_headers = $5::jsonb, response_body = $6, lease_until = now()
+			WHERE principal_id = $1 AND key = $2`, principal, key, state, rec.status, string(hj), rec.buf.Bytes())
 		return err
 	})
 	if err != nil {
