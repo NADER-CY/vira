@@ -52,3 +52,7 @@ mobile/ios/Runner/GeneratedPluginRegistrant.*
 .data/
 tmp/
 web/shared/src/api/*.d.ts
+mobile/test-report.json
+mobile/apk.sha256
+web/test-results/
+evidence/

@@ -179,7 +179,8 @@ services:
       retries: 40
 
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    build: ../minio
+    image: vira-minio:dev
     restart: unless-stopped
     command: ["server", "/data", "--console-address", ":9001"]
     environment:
@@ -189,7 +190,7 @@ services:
       - miniodata:/data
     ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-fs", "http://127.0.0.1:9000/minio/health/ready"]
       interval: 3s
       timeout: 3s
       retries: 40
