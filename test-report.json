@@ -1,0 +1,61 @@
+{"protocolVersion":"0.1.1","runnerVersion":null,"pid":2761,"type":"start","time":0}
+{"suite":{"id":0,"platform":"vm","path":"/home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"suite","time":0}
+{"test":{"id":1,"name":"loading /home/runner/work/vira/vira/mobile/test/format_test.dart","suiteID":0,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":1}
+{"suite":{"id":2,"platform":"vm","path":"/home/runner/work/vira/vira/mobile/test/app_test.dart"},"type":"suite","time":5}
+{"test":{"id":3,"name":"loading /home/runner/work/vira/vira/mobile/test/app_test.dart","suiteID":2,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":5}
+{"count":2,"time":5,"type":"allSuites"}
+{"testID":1,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":8237}
+{"group":{"id":4,"suiteID":0,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":17,"line":null,"column":null,"url":null},"type":"group","time":8240}
+{"group":{"id":5,"suiteID":0,"parentID":4,"name":"digits","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":6,"column":3,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"group","time":8240}
+{"test":{"id":6,"name":"digits ASCII ↔ Persian / Arabic-Indic","suiteID":0,"groupIDs":[4,5],"metadata":{"skip":false,"skipReason":null},"line":7,"column":5,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8240}
+{"testID":6,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8262}
+{"group":{"id":7,"suiteID":0,"parentID":4,"name":"money (integer Rial → Toman)","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":13,"column":3,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"group","time":8263}
+{"test":{"id":8,"name":"money (integer Rial → Toman) groups with the Persian separator","suiteID":0,"groupIDs":[4,7],"metadata":{"skip":false,"skipReason":null},"line":14,"column":5,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8263}
+{"testID":8,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8266}
+{"test":{"id":9,"name":"money (integer Rial → Toman) never rounds silently","suiteID":0,"groupIDs":[4,7],"metadata":{"skip":false,"skipReason":null},"line":18,"column":5,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8267}
+{"testID":9,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8269}
+{"test":{"id":10,"name":"money (integer Rial → Toman) zero","suiteID":0,"groupIDs":[4,7],"metadata":{"skip":false,"skipReason":null},"line":19,"column":5,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8269}
+{"testID":10,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8271}
+{"group":{"id":11,"suiteID":0,"parentID":4,"name":"Jalali calendar (verified against ICU)","metadata":{"skip":false,"skipReason":null},"testCount":9,"line":22,"column":3,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"group","time":8272}
+{"test":{"id":12,"name":"Jalali calendar (verified against ICU) (2026, 10, 30) → 1405/8/8 and back","suiteID":0,"groupIDs":[4,11],"metadata":{"skip":false,"skipReason":null},"line":33,"column":7,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8272}
+{"testID":12,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8276}
+{"test":{"id":13,"name":"Jalali calendar (verified against ICU) (2025, 3, 21) → 1404/1/1 and back","suiteID":0,"groupIDs":[4,11],"metadata":{"skip":false,"skipReason":null},"line":33,"column":7,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8276}
+{"testID":13,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8279}
+{"test":{"id":14,"name":"Jalali calendar (verified against ICU) (2024, 3, 20) → 1403/1/1 and back","suiteID":0,"groupIDs":[4,11],"metadata":{"skip":false,"skipReason":null},"line":33,"column":7,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8280}
+{"testID":14,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8282}
+{"test":{"id":15,"name":"Jalali calendar (verified against ICU) (2025, 3, 20) → 1403/12/30 and back","suiteID":0,"groupIDs":[4,11],"metadata":{"skip":false,"skipReason":null},"line":33,"column":7,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8283}
+{"testID":15,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8287}
+{"test":{"id":16,"name":"Jalali calendar (verified against ICU) (2026, 3, 20) → 1404/12/29 and back","suiteID":0,"groupIDs":[4,11],"metadata":{"skip":false,"skipReason":null},"line":33,"column":7,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8287}
+{"testID":16,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8291}
+{"test":{"id":17,"name":"Jalali calendar (verified against ICU) (1990, 1, 1) → 1368/10/11 and back","suiteID":0,"groupIDs":[4,11],"metadata":{"skip":false,"skipReason":null},"line":33,"column":7,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8291}
+{"testID":17,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8293}
+{"test":{"id":18,"name":"Jalali calendar (verified against ICU) (2000, 2, 29) → 1378/12/10 and back","suiteID":0,"groupIDs":[4,11],"metadata":{"skip":false,"skipReason":null},"line":33,"column":7,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8294}
+{"testID":18,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8296}
+{"test":{"id":19,"name":"Jalali calendar (verified against ICU) leap years","suiteID":0,"groupIDs":[4,11],"metadata":{"skip":false,"skipReason":null},"line":38,"column":5,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8296}
+{"testID":19,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8298}
+{"test":{"id":20,"name":"Jalali calendar (verified against ICU) formatted in Tehran time","suiteID":0,"groupIDs":[4,11],"metadata":{"skip":false,"skipReason":null},"line":42,"column":5,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8299}
+{"testID":20,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8303}
+{"group":{"id":21,"suiteID":0,"parentID":4,"name":"Iranian mobile numbers","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":48,"column":3,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"group","time":8303}
+{"test":{"id":22,"name":"Iranian mobile numbers normalises every common form","suiteID":0,"groupIDs":[4,21],"metadata":{"skip":false,"skipReason":null},"line":49,"column":5,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8303}
+{"testID":22,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8307}
+{"test":{"id":23,"name":"Iranian mobile numbers rejects invalid input","suiteID":0,"groupIDs":[4,21],"metadata":{"skip":false,"skipReason":null},"line":54,"column":5,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8307}
+{"testID":23,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8310}
+{"test":{"id":24,"name":"Iranian mobile numbers display","suiteID":0,"groupIDs":[4,21],"metadata":{"skip":false,"skipReason":null},"line":59,"column":5,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8311}
+{"testID":24,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8314}
+{"test":{"id":25,"name":"relative time","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":62,"column":3,"url":"file:///home/runner/work/vira/vira/mobile/test/format_test.dart"},"type":"testStart","time":8315}
+{"testID":25,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8318}
+{"testID":3,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":9770}
+{"group":{"id":26,"suiteID":2,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":6,"line":null,"column":null,"url":null},"type":"group","time":9770}
+{"test":{"id":27,"name":"the whole app is right-to-left Persian","suiteID":2,"groupIDs":[26],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":7,"root_column":3,"root_url":"file:///home/runner/work/vira/vira/mobile/test/app_test.dart"},"type":"testStart","time":9770}
+{"testID":27,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":10932}
+{"test":{"id":28,"name":"home shows the live server state from GET /v1/config","suiteID":2,"groupIDs":[26],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":17,"root_column":3,"root_url":"file:///home/runner/work/vira/vira/mobile/test/app_test.dart"},"type":"testStart","time":10932}
+{"testID":28,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11064}
+{"test":{"id":29,"name":"server unreachable → error state with retry","suiteID":2,"groupIDs":[26],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":24,"root_column":3,"root_url":"file:///home/runner/work/vira/vira/mobile/test/app_test.dart"},"type":"testStart","time":11065}
+{"testID":29,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11182}
+{"test":{"id":30,"name":"tabs navigate; create sheet lists items with their phases","suiteID":2,"groupIDs":[26],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":31,"root_column":3,"root_url":"file:///home/runner/work/vira/vira/mobile/test/app_test.dart"},"type":"testStart","time":11183}
+{"testID":30,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11503}
+{"test":{"id":31,"name":"theme switch: light ↔ dark from the profile, persisted","suiteID":2,"groupIDs":[26],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":43,"root_column":3,"root_url":"file:///home/runner/work/vira/vira/mobile/test/app_test.dart"},"type":"testStart","time":11504}
+{"testID":31,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11853}
+{"test":{"id":32,"name":"wallet is shown locked behind gate G1","suiteID":2,"groupIDs":[26],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":54,"root_column":3,"root_url":"file:///home/runner/work/vira/vira/mobile/test/app_test.dart"},"type":"testStart","time":11854}
+{"testID":32,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":12031}
+{"success":true,"type":"done","time":12055}
