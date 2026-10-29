@@ -1,0 +1,41 @@
+{
+  "$description": "VIRA design tokens (doc 09 §2). Single brand seed #BA0038 (DS-01); light and dark schemes committed (DS-02). Values measured from the UI archive (admin dark #0B0F17 / #293241 / #AAB1C0, accents #FF1753, #7B61FF, #00DC82). Edit here, then run: python3 scripts/gen_tokens.py",
+  "color": {
+    "light": {
+      "primary": "#BA0038", "onPrimary": "#FFFFFF", "primaryContainer": "#FFDADB", "onPrimaryContainer": "#40000D",
+      "accent": "#FF1753", "secondary": "#6A4FEA", "onSecondary": "#FFFFFF",
+      "background": "#FAF9FF", "surface": "#FFFFFF", "surfaceVariant": "#F2F1F8", "surfaceRaised": "#FFFFFF",
+      "onSurface": "#1A1B22", "onSurfaceVariant": "#5B5F6B", "outline": "#DCDDE6", "outlineStrong": "#B9BBC8",
+      "success": "#087A41", "warning": "#9A5B00", "danger": "#BA1A1A", "info": "#1F5FD6",
+      "successContainer": "#DDF7E8", "warningContainer": "#FFEFD6", "dangerContainer": "#FFDAD6", "infoContainer": "#DCE7FF",
+      "price": "#1A1B22", "priceDiscount": "#BA0038", "live": "#FF1753", "verified": "#1F6FEB", "sponsored": "#5B5F6B",
+      "scrim": "#00000066", "focus": "#6A4FEA"
+    },
+    "dark": {
+      "primary": "#FFB2BA", "onPrimary": "#67001A", "primaryContainer": "#92002A", "onPrimaryContainer": "#FFDADB",
+      "accent": "#FF1753", "secondary": "#A796FF", "onSecondary": "#1E0B6B",
+      "background": "#0B0F17", "surface": "#121826", "surfaceVariant": "#1A2230", "surfaceRaised": "#1E2636",
+      "onSurface": "#E6E8EE", "onSurfaceVariant": "#AAB1C0", "outline": "#293241", "outlineStrong": "#3B475B",
+      "success": "#00DC82", "warning": "#FFB547", "danger": "#FFB4AB", "info": "#8AB4FF",
+      "successContainer": "#003D23", "warningContainer": "#4A2E00", "dangerContainer": "#5C0A0A", "infoContainer": "#0E2A5C",
+      "price": "#E6E8EE", "priceDiscount": "#FFB2BA", "live": "#FF1753", "verified": "#8AB4FF", "sponsored": "#AAB1C0",
+      "scrim": "#000000A3", "focus": "#A796FF"
+    }
+  },
+  "gradient": { "brand": ["#FF1753", "#7B61FF"] },
+  "font": { "family": "Vazirmatn" },
+  "type": {
+    "displaySm": { "size": 28, "line": 40, "weight": 800 },
+    "titleLg":   { "size": 22, "line": 32, "weight": 700 },
+    "titleMd":   { "size": 18, "line": 28, "weight": 700 },
+    "bodyLg":    { "size": 16, "line": 26, "weight": 400 },
+    "bodyMd":    { "size": 14, "line": 24, "weight": 400 },
+    "labelMd":   { "size": 13, "line": 20, "weight": 600 },
+    "caption":   { "size": 12, "line": 18, "weight": 400 },
+    "priceLg":   { "size": 20, "line": 28, "weight": 800 }
+  },
+  "space": { "0": 0, "1": 4, "2": 8, "3": 12, "4": 16, "5": 20, "6": 24, "8": 32, "10": 40, "12": 48 },
+  "radius": { "sm": 8, "md": 12, "lg": 16, "xl": 24, "full": 999 },
+  "motion": { "short": 120, "medium": 240, "long": 400 },
+  "minTarget": 44
+}

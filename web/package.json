@@ -1,0 +1,40 @@
+{
+  "name": "vira-web",
+  "private": true,
+  "description": "VIRA web workspace: Super Admin (admin), Seller Admin (seller) and shared design system (shared).",
+  "workspaces": [
+    "shared",
+    "admin",
+    "seller"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "gen:api": "openapi-typescript ../contracts/openapi/public.v1.json -o shared/src/api/public.d.ts && openapi-typescript ../contracts/openapi/admin.v1.json -o shared/src/api/admin.d.ts",
+    "typecheck": "npm run gen:api && tsc -p shared && tsc -p admin && tsc -p seller",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "build": "npm run gen:api && npm run build -w admin && npm run build -w seller",
+    "screenshots": "node e2e/screenshots.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.30.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.3.0",
+    "jsdom": "^26.1.0",
+    "openapi-typescript": "^7.8.0",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.38.0",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.4",
+    "playwright": "^1.55.0"
+  }
+}

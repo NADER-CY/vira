@@ -1,0 +1,96 @@
+name: web
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: web
+
+jobs:
+  build-test:
+    name: build-test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Generated design tokens are up to date (and pass WCAG AA)
+        working-directory: .
+        run: .github/scripts/run.sh tokens python3 scripts/gen_tokens.py --check
+      - name: Install (npm ci with the committed lockfile)
+        run: |
+          if [ -f package-lock.json ]; then ../.github/scripts/run.sh "npm ci" npm ci --no-audit --no-fund
+          else echo "::warning::web/package-lock.json missing — resolving fresh"; ../.github/scripts/run.sh "npm install" npm install --no-audit --no-fund; fi
+      - name: Type check (TypeScript + generated OpenAPI types)
+        run: ../.github/scripts/run.sh typecheck npm run typecheck
+      - name: Lint
+        run: ../.github/scripts/run.sh lint npm run lint
+      - name: Unit and component tests
+        run: ../.github/scripts/run.sh vitest npx vitest run --reporter=default --reporter=junit --outputFile.junit=test-results/junit.xml
+      - name: Test summary
+        if: always()
+        run: |
+          if [ -f test-results/junit.xml ]; then
+            python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          r = ET.parse("test-results/junit.xml").getroot()
+          t = int(r.get("tests", 0)); f = int(r.get("failures", 0)) + int(r.get("errors", 0)); s = int(r.get("skipped", 0) or 0)
+          print(f"::notice title=web tests::{t - f - s} passed, {f} failed, {s} skipped")
+          PY
+          fi
+      - name: Build Super Admin and Seller Admin
+        run: ../.github/scripts/run.sh build npm run build
+      - name: Dependency audit (high and critical)
+        run: |
+          if [ -f package-lock.json ]; then ../.github/scripts/run.sh "npm audit" npm audit --omit=dev --audit-level=high; fi
+      - name: Screenshots of both shells (light and dark)
+        run: |
+          npx playwright install --with-deps chromium
+          ../.github/scripts/run.sh screenshots node e2e/screenshots.mjs ../evidence/web
+      - uses: actions/upload-artifact@v6
+        with:
+          name: web-dist
+          path: |
+            web/admin/dist
+            web/seller/dist
+          retention-days: 14
+      - uses: actions/upload-artifact@v6
+        with:
+          name: web-evidence
+          path: |
+            evidence/web
+            web/package-lock.json
+            web/test-results
+          retention-days: 14
+
+  evidence:
+    name: publish-evidence
+    needs: build-test
+    if: always() && needs.build-test.result != 'cancelled' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v6
+        with:
+          name: web-evidence
+          path: out
+      - name: Push evidence branch
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/publish-evidence.sh web out
