@@ -23,11 +23,13 @@ import (
 
 var (
 	failures int
+	passes   int
 	client   = &http.Client{Timeout: 10 * time.Second}
 )
 
 func check(name string, ok bool, detail string) {
 	if ok {
+		passes++
 		fmt.Printf("PASS %s\n", name)
 		return
 	}
@@ -140,7 +142,10 @@ func main() {
 	check("SMS simulator inbox shows it", code == 200 && len(items) > 0 &&
 		slices.ContainsFunc(items, func(i any) bool { return i.(map[string]any)["body"] == "smoke" }), raw)
 
-	fmt.Printf("smoke: %d failure(s)\n", failures)
+	fmt.Printf("smoke: %d passed, %d failed\n", passes, failures)
+	if os.Getenv("GITHUB_ACTIONS") == "true" {
+		fmt.Printf("::notice title=dev-stack smoke::%d passed, %d failed\n", passes, failures)
+	}
 	if failures > 0 {
 		os.Exit(1)
 	}

@@ -73,6 +73,7 @@ jobs:
         run: |
           if ls test/goldens/*.png >/dev/null 2>&1; then
             ../.github/scripts/run.sh goldens flutter test --tags golden
+            echo "::notice title=goldens::$(ls test/goldens/*.png | wc -l) golden screenshots matched"
           else
             echo "::warning::no committed goldens — generating baselines"
             ../.github/scripts/run.sh goldens flutter test --tags golden --update-goldens

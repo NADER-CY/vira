@@ -56,6 +56,9 @@ func main() {
 		}
 	}
 	fmt.Printf("tests: %d passed, %d failed, %d skipped\n", counts["pass"], counts["fail"], counts["skip"])
+	if os.Getenv("GITHUB_ACTIONS") == "true" {
+		fmt.Printf("::notice title=go tests::%d passed, %d failed, %d skipped\n", counts["pass"], counts["fail"], counts["skip"])
+	}
 	if *failOnFailure && len(failed) > 0 {
 		os.Exit(1)
 	}
