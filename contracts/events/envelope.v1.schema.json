@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vira:events:envelope:v1",
+  "title": "VIRA event envelope (CloudEvents 1.0 compatible, doc 07 §5.1)",
+  "type": "object",
+  "required": ["specversion", "id", "source", "type", "subject", "time", "datacontenttype", "aggregateid", "aggregateversion", "data"],
+  "properties": {
+    "specversion": { "const": "1.0" },
+    "id": { "type": "string", "format": "uuid", "description": "event_id; consumers de-duplicate on it (platform.inbox)" },
+    "source": { "type": "string", "pattern": "^vira/[a-z_]+$" },
+    "type": { "type": "string", "pattern": "^vira\\.[a-z_]+\\.[a-z_]+\\.v[0-9]+$", "description": "also the NATS subject" },
+    "subject": { "type": "string" },
+    "time": { "type": "string", "format": "date-time" },
+    "datacontenttype": { "const": "application/json" },
+    "traceparent": { "type": "string" },
+    "aggregateid": { "type": "string" },
+    "aggregateversion": { "type": "integer", "minimum": 0 },
+    "data": { "type": "object" }
+  },
+  "additionalProperties": false
+}

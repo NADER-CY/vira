@@ -1,0 +1,381 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "VIRA Public API",
+    "version": "1.0.0-phase1",
+    "description": "Mobile app and seller web API (doc 07). Phase 1: platform surface only. Unsafe methods accept Idempotency-Key; money is integer Rial."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "local development"
+    }
+  ],
+  "paths": {
+    "/health/live": {
+      "get": {
+        "operationId": "healthLive",
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Live"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "healthReady",
+        "tags": [
+          "health"
+        ],
+        "summary": "Readiness (dependency checks)",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Readiness"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Not ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Readiness"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/config": {
+      "get": {
+        "operationId": "getConfig",
+        "tags": [
+          "platform"
+        ],
+        "summary": "Client configuration: non-regulated flags, regulated capabilities (always off), public remote config",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "getMe",
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The authenticated principal",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "426": {
+            "description": "App too old",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Maintenance",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "description": "RFC 9457 problem details (doc 07 §1). Extension members may appear (e.g. gate, min_supported_version).",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "urn:vira:error:not_found"
+          },
+          "title": {
+            "type": "string",
+            "description": "Persian, user-facing"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "validation_failed",
+              "unauthenticated",
+              "forbidden",
+              "not_found",
+              "method_not_allowed",
+              "conflict",
+              "idempotency_conflict",
+              "request_in_progress",
+              "precondition_failed",
+              "precondition_required",
+              "rate_limited",
+              "feature_disabled",
+              "feature_locked",
+              "account_restricted",
+              "mfa_required",
+              "mfa_invalid",
+              "maintenance",
+              "upgrade_required",
+              "internal_error",
+              "service_unavailable"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          },
+          "trace_id": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "field",
+                "code"
+              ],
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "detail": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "Live": {
+        "type": "object",
+        "required": [
+          "status",
+          "service"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "service": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "Readiness": {
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "checks"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "fail"
+            ]
+          },
+          "service": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "status",
+                "duration_ms"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ok",
+                    "fail"
+                  ]
+                },
+                "error": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ClientConfig": {
+        "type": "object",
+        "required": [
+          "api_version",
+          "flags",
+          "regulated_locked",
+          "config"
+        ],
+        "properties": {
+          "api_version": {
+            "type": "string"
+          },
+          "server_version": {
+            "type": "string"
+          },
+          "flags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "regulated_locked": {
+            "type": "object",
+            "description": "Regulated capability → approval gate (FG-1b, G1, G2, G3)",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Me": {
+        "type": "object",
+        "required": [
+          "subject",
+          "kind"
+        ],
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT (ES256)"
+      }
+    },
+    "parameters": {
+      "AppVersion": {
+        "name": "X-App-Version",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "example": "1.0.0"
+        },
+        "description": "Mobile app version; below mobile.min_supported_version → 426"
+      }
+    }
+  }
+}
