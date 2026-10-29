@@ -1,0 +1,110 @@
+name: backend
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      VIRA_TEST_PG_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      VIRA_REQUIRE_DB: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Verify module checksums
+        run: go mod verify && go mod tidy -diff
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - name: go vet
+        run: go vet ./...
+      - name: Build all runtimes
+        run: |
+          mkdir -p bin
+          for c in api admin-api worker realtime media migrate; do go build -trimpath -o bin/$c ./cmd/$c; done
+          ls -l bin
+      - name: Unit + integration tests (real PostgreSQL)
+        run: go test -count=1 -race -coverprofile=coverage.out -json ./... > test-report.json; rc=$?; go run ./scripts/testsummary < test-report.json; exit $rc
+      - name: Coverage
+        if: always()
+        run: go tool cover -func=coverage.out | tail -1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-report
+          path: |
+            backend/test-report.json
+            backend/coverage.out
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-binaries
+          path: backend/bin/
+          retention-days: 14
+
+  migrations:
+    name: migrations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGPASSWORD: postgres
+      VIRA_ENV: test
+      VIRA_DB_MIGRATOR_URL: postgres://migrator:migrator@localhost:5432/vira?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Bootstrap cluster roles and database
+        run: |
+          go run ./cmd/migrate bootstrap-sql | psql -h localhost -U postgres -v ON_ERROR_STOP=1
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -c "ALTER ROLE migrator PASSWORD 'migrator'" -c "CREATE DATABASE vira OWNER migrator"
+      - name: Up, down to zero, up again (reversibility)
+        run: |
+          go run ./cmd/migrate up
+          go run ./cmd/migrate status
+          n=$(ls migrations/*.up.sql | wc -l)
+          go run ./cmd/migrate down "$n"
+          go run ./cmd/migrate up
+          go run ./cmd/migrate status
+      - name: Regulated flags are locked off in the database
+        run: |
+          psql -h localhost -U postgres -d vira -v ON_ERROR_STOP=1 -tAc "SELECT key FROM platform.feature_flags WHERE regulated AND enabled" | tee enabled.txt
+          test ! -s enabled.txt
+          if psql -h localhost -U postgres -d vira -v ON_ERROR_STOP=1 -c "UPDATE platform.feature_flags SET enabled = true WHERE key = 'payments.real_money'"; then
+            echo "regulated flag could be enabled"; exit 1; fi
