@@ -1,0 +1,128 @@
+name: mobile
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: mobile
+
+jobs:
+  build-test:
+    name: mobile-build-test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+      - name: Generated design tokens are up to date
+        working-directory: .
+        run: .github/scripts/run.sh tokens python3 scripts/gen_tokens.py --check
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # Pinned minor: golden images are compared pixel-for-pixel.
+          flutter-version: 3.44.x
+          cache: true
+      - name: Toolchain
+        run: flutter --version && dart --version
+      - name: Bootstrap platform folders if not yet committed (android, ios)
+        run: |
+          if [ ! -d android ]; then
+            echo "::warning::android/ not committed yet — generating with flutter create"
+            ../.github/scripts/run.sh "flutter create" flutter create --platforms=android,ios --org ir.vira --project-name vira --no-pub .
+            rm -f test/widget_test.dart
+            echo "BOOTSTRAPPED=1" >> "$GITHUB_ENV"
+          fi
+      - name: flutter pub get
+        run: ../.github/scripts/run.sh "pub get" flutter pub get
+      - name: flutter analyze
+        run: ../.github/scripts/run.sh analyze flutter analyze --no-fatal-infos
+      - name: Unit and widget tests (RTL, themes, formatting, API states)
+        run: ../.github/scripts/run.sh "flutter test" flutter test --exclude-tags golden --file-reporter json:test-report.json
+      - name: Test summary
+        if: always()
+        run: |
+          if [ -f test-report.json ]; then python3 - <<'PY'
+          import json
+          p=f=s=0
+          tests={}
+          for line in open("test-report.json"):
+              e=json.loads(line)
+              if e.get("type")=="testStart": tests[e["test"]["id"]]=e["test"]["name"]
+              if e.get("type")=="testDone" and not e.get("hidden"):
+                  if e.get("skipped"): s+=1
+                  elif e["result"]=="success": p+=1
+                  else: f+=1
+          print(f"::notice title=flutter tests::{p} passed, {f} failed, {s} skipped")
+          PY
+          fi
+      - name: Golden screenshots (RTL, light and dark)
+        run: |
+          if ls test/goldens/*.png >/dev/null 2>&1; then
+            ../.github/scripts/run.sh goldens flutter test --tags golden
+            echo "::notice title=goldens::$(ls test/goldens/*.png | wc -l) golden screenshots matched"
+          else
+            echo "::warning::no committed goldens — generating baselines"
+            ../.github/scripts/run.sh goldens flutter test --tags golden --update-goldens
+          fi
+      - name: Build Android debug APK
+        run: ../.github/scripts/run.sh "build apk" flutter build apk --debug --dart-define=VIRA_APP_VERSION=0.1.0-${{ github.sha }}
+      - name: APK details
+        run: |
+          ls -l build/app/outputs/flutter-apk/
+          sha256sum build/app/outputs/flutter-apk/app-debug.apk | tee apk.sha256
+          echo "::notice title=apk::$(cat apk.sha256)"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: vira-android-debug-apk
+          path: |
+            mobile/build/app/outputs/flutter-apk/app-debug.apk
+            mobile/apk.sha256
+          retention-days: 30
+      - name: Collect evidence (goldens, lockfile, generated platform folders)
+        if: always()
+        run: |
+          mkdir -p ../evidence/mobile
+          cp -r test/goldens ../evidence/mobile/ 2>/dev/null || true
+          cp -r test/failures ../evidence/mobile/golden-failures 2>/dev/null || true
+          cp pubspec.lock test-report.json apk.sha256 ../evidence/mobile/ 2>/dev/null || true
+          if [ "${BOOTSTRAPPED:-0}" = 1 ]; then tar czf ../evidence/mobile/platforms.tgz android ios .metadata; fi
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: mobile-evidence
+          path: evidence/mobile
+          retention-days: 14
+
+  evidence:
+    name: mobile-evidence
+    needs: build-test
+    if: always() && needs.build-test.result != 'cancelled' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v6
+        with:
+          name: mobile-evidence
+          path: out
+      - name: Push evidence branch
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/publish-evidence.sh mobile out

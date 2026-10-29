@@ -51,3 +51,10 @@ mobile/ios/Runner/GeneratedPluginRegistrant.*
 # --- Local runtime data ---
 .data/
 tmp/
+web/shared/src/api/*.d.ts
+mobile/test-report.json
+mobile/apk.sha256
+web/test-results/
+evidence/
+*.iml
+mobile/test/failures/

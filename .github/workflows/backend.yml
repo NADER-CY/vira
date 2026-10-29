@@ -1,0 +1,161 @@
+name: backend
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  test:
+    name: backend-test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      VIRA_TEST_PG_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      VIRA_REQUIRE_DB: "1"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Verify module checksums
+        run: ../.github/scripts/run.sh "go mod" bash -c "go mod verify && go mod tidy -diff"
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - name: go vet
+        run: ../.github/scripts/run.sh "go vet" go vet ./...
+      - name: Build all runtimes
+        run: |
+          mkdir -p bin
+          for c in api admin-api worker realtime media migrate; do go build -trimpath -o bin/$c ./cmd/$c; done
+          ls -l bin
+      - name: Unit + integration tests (real PostgreSQL)
+        run: |
+          set +e
+          go test -count=1 -race -coverprofile=coverage.out -json ./... > test-report.json; rc=$?
+          ../.github/scripts/run.sh "go test" go run ./scripts/testsummary -fail-on-failure < test-report.json || exit 1
+          exit $rc
+      - name: Coverage
+        if: always()
+        run: go tool cover -func=coverage.out | tail -1
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: backend-test-report
+          path: |
+            backend/test-report.json
+            backend/coverage.out
+          retention-days: 14
+      - uses: actions/upload-artifact@v6
+        with:
+          name: backend-binaries
+          path: backend/bin/
+          retention-days: 14
+
+  migrations:
+    name: migrations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGPASSWORD: postgres
+      VIRA_ENV: test
+      VIRA_DB_MIGRATOR_URL: postgres://migrator:migrator@localhost:5432/vira?sslmode=disable
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Bootstrap cluster roles and database
+        run: |
+          go run ./cmd/migrate bootstrap-sql | psql -h localhost -U postgres -v ON_ERROR_STOP=1
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -c "ALTER ROLE migrator PASSWORD 'migrator'" -c "CREATE DATABASE vira OWNER migrator"
+      - name: Up, down to zero, up again (reversibility)
+        run: |
+          ../.github/scripts/run.sh "migrate up" go run ./cmd/migrate up
+          go run ./cmd/migrate status
+          n=$(ls migrations/*.up.sql | wc -l)
+          go run ./cmd/migrate down "$n"
+          go run ./cmd/migrate up
+          go run ./cmd/migrate status
+      - name: Regulated flags are locked off in the database
+        run: |
+          psql -h localhost -U postgres -d vira -v ON_ERROR_STOP=1 -tAc "SELECT key FROM platform.feature_flags WHERE regulated AND enabled" | tee enabled.txt
+          test ! -s enabled.txt
+          if psql -h localhost -U postgres -d vira -v ON_ERROR_STOP=1 -c "UPDATE platform.feature_flags SET enabled = true WHERE key = 'payments.real_money'"; then
+            echo "regulated flag could be enabled"; exit 1; fi
+
+  stack:
+    name: dev-stack-smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Generate local .env and JWT keys
+        working-directory: .
+        run: ./scripts/dev-setup.sh
+      - name: docker compose up --wait (Postgres, PgBouncer, Valkey, NATS, MinIO, Mailpit, devsim, 5 runtimes)
+        run: .github/scripts/run.sh "compose up" docker compose --env-file .env -f deploy/compose/docker-compose.yml up -d --build --wait --wait-timeout 300
+        working-directory: .
+      - name: Create a smoke-test Super Admin
+        working-directory: .
+        run: |
+          set -o pipefail
+          pw="$(openssl rand -hex 16)"
+          echo "::add-mask::$pw"
+          if ! out=$(docker compose --env-file .env -f deploy/compose/docker-compose.yml exec -T -e VIRA_NEW_ADMIN_PASSWORD="$pw" admin-api \
+                admin-api create-admin -email smoke@vira.local -name Smoke -roles super_admin 2>&1); then
+            echo "::error title=create-admin::$(echo "$out" | tail -n 20 | awk 'BEGIN{ORS="%0A"} {print}')"; exit 1
+          fi
+          enr=$(echo "$out" | grep '"totp_secret"' | tail -n1)
+          secret=$(echo "$enr" | jq -er .totp_secret) || { echo "::error title=create-admin output::$(echo "$out" | tail -n 20 | awk 'BEGIN{ORS="%0A"} {print}')"; exit 1; }
+          echo "::add-mask::$secret"
+          VIRA_NEW_ADMIN_PASSWORD="$pw"
+          echo "VIRA_SMOKE_ADMIN_EMAIL=smoke@vira.local" >> "$GITHUB_ENV"
+          echo "VIRA_SMOKE_ADMIN_PASSWORD=$VIRA_NEW_ADMIN_PASSWORD" >> "$GITHUB_ENV"
+          echo "VIRA_SMOKE_TOTP_SECRET=$secret" >> "$GITHUB_ENV"
+      - name: End-to-end smoke test
+        run: ../.github/scripts/run.sh smoke go run ./scripts/smoke
+      - name: Migration status through the stack
+        working-directory: .
+        run: docker compose --env-file .env -f deploy/compose/docker-compose.yml run --rm migrate migrate status
+      - name: Diagnostics on failure
+        if: failure()
+        working-directory: .
+        run: |
+          docker compose --env-file .env -f deploy/compose/docker-compose.yml ps -a > ps.txt 2>&1 || true
+          docker compose --env-file .env -f deploy/compose/docker-compose.yml logs --no-color --tail=40 > logs.txt 2>&1 || true
+          .github/scripts/run.sh "compose ps" bash -c "cat ps.txt; exit 1" || true
+          .github/scripts/run.sh "compose logs" bash -c "tail -n 170 logs.txt; exit 1" || true

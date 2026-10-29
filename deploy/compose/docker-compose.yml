@@ -1,0 +1,205 @@
+# VIRA local development stack (doc 20 §3.1). Start with `make dev-up` from the repository root.
+# Every port is bound to 127.0.0.1. Secrets come from the git-ignored .env (created by scripts/dev-setup.sh).
+name: vira
+
+x-backend: &backend
+  build:
+    context: ../../backend
+  image: vira-backend:dev
+  restart: unless-stopped
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+    pgbouncer:
+      condition: service_healthy
+  environment: &backend-env
+    VIRA_ENV: development
+    VIRA_LOG_LEVEL: debug
+    VIRA_DB_PGBOUNCER: "true"
+    VIRA_DB_PUBLIC_URL: postgres://app_public:${APP_PUBLIC_PASSWORD}@pgbouncer:6432/vira?sslmode=disable
+    VIRA_DB_ADMIN_URL: postgres://app_admin:${APP_ADMIN_PASSWORD}@pgbouncer:6432/vira?sslmode=disable
+    VIRA_DB_WORKER_URL: postgres://app_worker:${APP_WORKER_PASSWORD}@pgbouncer:6432/vira?sslmode=disable
+    VIRA_NATS_URL: nats://nats:4222
+    VIRA_VALKEY_ADDR: valkey:6379
+    VIRA_S3_ENDPOINT: http://minio:9000
+    VIRA_ADMIN_TOTP_KEY: ${VIRA_ADMIN_TOTP_KEY}
+    VIRA_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:5174
+    VIRA_PROVIDER_SMS: mock
+    VIRA_PROVIDER_PSP: simulator
+    VIRA_PROVIDER_PUSH: mock
+    VIRA_JWT_PRIVATE_KEY_FILE: /run/vira-jwt/private.pem
+    VIRA_JWT_PUBLIC_KEY_FILE: /run/vira-jwt/public.pem
+  volumes:
+    - ${VIRA_JWT_DIR:-../../.data/jwt}:/run/vira-jwt:ro
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${VIRA_PG_SUPERUSER_PASSWORD}
+      VIRA_DB_NAME: vira
+      MIGRATOR_PASSWORD: ${MIGRATOR_PASSWORD}
+      APP_PUBLIC_PASSWORD: ${APP_PUBLIC_PASSWORD}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD}
+      APP_WORKER_PASSWORD: ${APP_WORKER_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../../backend/migrations/bootstrap/roles.sql:/docker-entrypoint-initdb.d/00-roles.sql:ro
+      - ../postgres/init/10-setup.sh:/docker-entrypoint-initdb.d/10-setup.sh:ro
+    ports: ["127.0.0.1:5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d vira"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  pgbouncer:
+    build: ../pgbouncer
+    image: vira-pgbouncer:dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_NAME: vira
+      APP_PUBLIC_PASSWORD: ${APP_PUBLIC_PASSWORD}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD}
+      APP_WORKER_PASSWORD: ${APP_WORKER_PASSWORD}
+    ports: ["127.0.0.1:6432:6432"]
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=$$APP_PUBLIC_PASSWORD psql -h 127.0.0.1 -p 6432 -U app_public -d vira -tAc 'select 1' | grep -q 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  migrate:
+    build:
+      context: ../../backend
+    image: vira-backend:dev
+    command: ["migrate", "up"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      VIRA_ENV: development
+      # Migrations connect directly (not through PgBouncer): they hold a session advisory lock.
+      VIRA_DB_MIGRATOR_URL: postgres://migrator:${MIGRATOR_PASSWORD}@postgres:5432/vira?sslmode=disable
+
+  api:
+    <<: *backend
+    command: ["api"]
+    ports: ["127.0.0.1:8080:8080"]
+    healthcheck: &hc
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health/ready >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  admin-api:
+    <<: *backend
+    command: ["admin-api"]
+    ports: ["127.0.0.1:8081:8081"]
+    healthcheck:
+      <<: *hc
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/health/ready >/dev/null"]
+
+  worker:
+    <<: *backend
+    command: ["worker"]
+    ports: ["127.0.0.1:8082:8082"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      <<: *hc
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8082/health/ready >/dev/null"]
+
+  realtime:
+    <<: *backend
+    command: ["realtime"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+    ports: ["127.0.0.1:8083:8083"]
+    healthcheck:
+      <<: *hc
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8083/health/ready >/dev/null"]
+
+  media:
+    <<: *backend
+    command: ["media"]
+    ports: ["127.0.0.1:8084:8084"]
+    depends_on:
+      minio:
+        condition: service_healthy
+    healthcheck:
+      <<: *hc
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8084/health/ready >/dev/null"]
+
+  devsim:
+    image: vira-backend:dev
+    build:
+      context: ../../backend
+    command: ["devsim"]
+    restart: unless-stopped
+    environment:
+      VIRA_ENV: development
+    ports: ["127.0.0.1:8090:8090"]
+    healthcheck:
+      <<: *hc
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8090/health/live >/dev/null"]
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    ports: ["127.0.0.1:6379:6379"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  nats:
+    image: nats:2.11-alpine
+    restart: unless-stopped
+    command: ["-m", "8222"]
+    ports: ["127.0.0.1:4222:4222", "127.0.0.1:8222:8222"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8222/healthz >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  minio:
+    build: ../minio
+    image: vira-minio:dev
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - miniodata:/data
+    ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://127.0.0.1:9000/minio/health/ready"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports: ["127.0.0.1:8025:8025", "127.0.0.1:1025:1025"]
+
+volumes:
+  pgdata:
+  miniodata:

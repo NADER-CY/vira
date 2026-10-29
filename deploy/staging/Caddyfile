@@ -1,0 +1,22 @@
+{$VIRA_API_HOST} {
+	reverse_proxy /v1/ws realtime:8083
+	reverse_proxy api:8080
+}
+
+{$VIRA_ADMIN_HOST} {
+	handle /v1/* {
+		reverse_proxy admin-api:8081
+	}
+	handle {
+		root * /srv/admin
+		try_files {path} /index.html
+		file_server
+	}
+	header X-Robots-Tag "noindex, nofollow"
+}
+
+{$VIRA_SELLER_HOST} {
+	root * /srv/seller
+	try_files {path} /index.html
+	file_server
+}
