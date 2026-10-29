@@ -46,7 +46,7 @@ export function DashboardPage() {
                 <tbody>
                   {data.readiness.checks.map((c) => (
                     <tr key={c.name}>
-                      <td className="ltr">{c.name}</td>
+                      <td><span className="ltr">{c.name}</span></td>
                       <td><Badge tone={c.status === "ok" ? "success" : "danger"}>{c.status === "ok" ? "سالم" : "خطا"}</Badge></td>
                       <td className="tabular">{c.duration_ms} ms</td>
                     </tr>
@@ -63,7 +63,10 @@ export function DashboardPage() {
                 <tbody>
                   {[...data.regulated_capabilities].sort((a, b) => a.key.localeCompare(b.key)).map((c) => (
                     <tr key={c.key}>
-                      <td>{gateLabel[c.key] ?? c.key}<div className="ltr" style={{ font: "var(--type-caption)", color: "var(--color-on-surface-variant)" }}>{c.key}</div></td>
+                      <td>
+                        <div>{gateLabel[c.key] ?? c.key}</div>
+                        <div style={{ font: "var(--type-caption)", color: "var(--color-on-surface-variant)" }}><span className="ltr">{c.key}</span></div>
+                      </td>
                       <td><Badge tone="brand">{c.gate}</Badge></td>
                       <td><Badge tone="danger" icon="lock">قفل</Badge></td>
                     </tr>
