@@ -12,10 +12,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alicebob/miniredis/v2"
+	"github.com/redis/go-redis/v9"
+
 	"github.com/NADER-CY/vira/backend/internal/app/publicapi"
+	"github.com/NADER-CY/vira/backend/internal/modules/identity"
+	idc "github.com/NADER-CY/vira/backend/internal/modules/identity/contract"
+	"github.com/NADER-CY/vira/backend/internal/modules/media"
+	"github.com/NADER-CY/vira/backend/internal/modules/moderation"
+	"github.com/NADER-CY/vira/backend/internal/modules/social"
 	"github.com/NADER-CY/vira/backend/internal/platform/auth"
 	"github.com/NADER-CY/vira/backend/internal/platform/flags"
 	"github.com/NADER-CY/vira/backend/internal/platform/health"
+	"github.com/NADER-CY/vira/backend/internal/platform/objectstore"
+	"github.com/NADER-CY/vira/backend/internal/platform/ratelimit"
+	"github.com/NADER-CY/vira/backend/internal/platform/sms"
 	"github.com/NADER-CY/vira/backend/internal/platform/testdb"
 )
 
@@ -24,6 +35,10 @@ type fixture struct {
 	signer *auth.Signer
 	d      *testdb.DB
 	fr     *flags.Reader
+	sms    *sms.Mock
+	mr     *miniredis.Miniredis
+	store  *objectstore.Memory
+	pii    idc.PII
 }
 
 func setup(t *testing.T) *fixture {
@@ -42,9 +57,25 @@ func setup(t *testing.T) *fixture {
 		Log:     slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Version: "test",
 	}
-	srv := httptest.NewServer(publicapi.Handler(deps, publicapi.New(deps)))
-	t.Cleanup(srv.Close)
-	return &fixture{srv: srv, signer: signer, d: d, fr: fr}
+	f := &fixture{signer: signer, d: d, fr: fr, sms: &sms.Mock{}, mr: miniredis.RunT(t), store: &objectstore.Memory{},
+		pii: idc.PII{EncKey: bytesOf(1), IndexKey: bytesOf(2)}}
+	lim := &ratelimit.Limiter{Client: redis.NewClient(&redis.Options{Addr: f.mr.Addr()}), Prefix: "t:"}
+	pool := d.Pool("app_public")
+	deps.Identity = &identity.Service{Pool: pool, Signer: signer, Limiter: lim, SMS: f.sms, PII: f.pii, Log: deps.Log}
+	deps.Social = &social.Service{Pool: pool, Limiter: lim, Log: deps.Log}
+	deps.Media = &media.Service{Pool: pool, Store: f.store, Limiter: lim, Log: deps.Log}
+	deps.Moderation = &moderation.Service{Pool: pool, Limiter: lim, Log: deps.Log}
+	f.srv = httptest.NewServer(publicapi.Handler(deps, publicapi.New(deps)))
+	t.Cleanup(f.srv.Close)
+	return f
+}
+
+func bytesOf(b byte) []byte {
+	out := make([]byte, 32)
+	for i := range out {
+		out[i] = b
+	}
+	return out
 }
 
 func get(t *testing.T, url string, hdr map[string]string) (int, map[string]any, http.Header) {
@@ -101,22 +132,26 @@ func TestProblemResponsesAndTracing(t *testing.T) {
 	resp.Body.Close()
 }
 
-func TestMeRequiresValidToken(t *testing.T) {
+func TestMeRequiresValidTokenAndLiveSession(t *testing.T) {
 	f := setup(t)
 	if st, _, _ := get(t, f.srv.URL+"/v1/me", nil); st != 401 {
 		t.Fatalf("anonymous me: %d", st)
 	}
-	tok, _, _ := f.signer.Issue("user-42", "user", []string{"basic"})
-	st, b, _ := get(t, f.srv.URL+"/v1/me", map[string]string{"Authorization": "Bearer " + tok})
-	if st != 200 || b["subject"] != "user-42" {
+	// A correctly signed token without a server-side session is refused.
+	tok, _, _ := f.signer.Issue("01a18851-27a5-7d09-aa65-0bf82139d320", "user", []string{"basic"})
+	if st, _, _ := get(t, f.srv.URL+"/v1/me", map[string]string{"Authorization": "Bearer " + tok}); st != 401 {
+		t.Fatalf("token without session: %d", st)
+	}
+	u := f.signUp(t, "09120000001")
+	st, b, _ := get(t, f.srv.URL+"/v1/me", u.auth())
+	if st != 200 || b["subject"] != u.id {
 		t.Fatalf("me: %d %v", st, b)
 	}
 }
 
 func TestMaintenanceModeAndMinVersion(t *testing.T) {
 	f := setup(t)
-	tok, _, _ := f.signer.Issue("user-1", "user", nil)
-	auth := map[string]string{"Authorization": "Bearer " + tok}
+	auth := f.signUp(t, "09120000002").auth()
 
 	f.d.Pool("superuser").Exec(context.Background(), `UPDATE platform.remote_config SET value = '"2.3.0"' WHERE key = 'mobile.min_supported_version'`) //nolint:errcheck
 	f.fr.Invalidate()

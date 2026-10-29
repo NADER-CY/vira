@@ -6,9 +6,49 @@ import (
 	"testing"
 )
 
-func lookup(m map[string]string) func(string) string { return func(k string) string { return m[k] } }
+// lookup serves m, plus valid PII keys unless the map sets them (use "-" to leave a key unset).
+func lookup(m map[string]string) func(string) string {
+	return func(k string) string {
+		if v, ok := m[k]; ok {
+			if v == "-" {
+				return ""
+			}
+			return v
+		}
+		switch k {
+		case "VIRA_PII_ENC_KEY":
+			return key32
+		case "VIRA_PII_INDEX_KEY":
+			return keyB
+		}
+		return ""
+	}
+}
 
-var key32 = base64.StdEncoding.EncodeToString([]byte(strings.Repeat("k", 32)))
+var (
+	key32 = base64.StdEncoding.EncodeToString([]byte(strings.Repeat("k", 32)))
+	keyB  = base64.StdEncoding.EncodeToString([]byte(strings.Repeat("i", 32)))
+)
+
+func TestPIIKeysRequiredAndDistinct(t *testing.T) {
+	if _, err := LoadFrom("api", lookup(map[string]string{"VIRA_DB_PUBLIC_URL": "postgres://x", "VIRA_PII_ENC_KEY": "-"})); err == nil {
+		t.Error("api without VIRA_PII_ENC_KEY accepted")
+	}
+	same := map[string]string{"VIRA_DB_PUBLIC_URL": "postgres://x", "VIRA_PII_INDEX_KEY": key32}
+	if _, err := LoadFrom("api", lookup(same)); err == nil || !strings.Contains(err.Error(), "must differ") {
+		t.Errorf("identical PII keys accepted: %v", err)
+	}
+	if _, err := LoadFrom("worker", lookup(map[string]string{"VIRA_DB_WORKER_URL": "postgres://x", "VIRA_PII_ENC_KEY": "-", "VIRA_PII_INDEX_KEY": "-"})); err != nil {
+		t.Errorf("worker should not need PII keys: %v", err)
+	}
+}
+
+func TestDevsimSMSRefusedInProduction(t *testing.T) {
+	env := map[string]string{"VIRA_ENV": "production", "VIRA_DB_PUBLIC_URL": "postgres://x", "VIRA_PROVIDER_SMS": "devsim"}
+	if _, err := LoadFrom("api", lookup(env)); err == nil || !strings.Contains(err.Error(), "VIRA_PROVIDER_SMS=devsim") {
+		t.Errorf("devsim SMS accepted in production: %v", err)
+	}
+}
 
 func TestDevelopmentDefaults(t *testing.T) {
 	c, err := LoadFrom("api", lookup(map[string]string{"VIRA_DB_PUBLIC_URL": "postgres://x"}))
@@ -45,10 +85,11 @@ func TestProductionRefusesMocksAndEphemeralKeys(t *testing.T) {
 			t.Errorf("error does not mention %s: %v", want, err)
 		}
 	}
-	env["VIRA_PROVIDER_SMS"], env["VIRA_PROVIDER_PSP"], env["VIRA_PROVIDER_PUSH"] = "kavenegar", "psp-x", "pushe"
+	env["VIRA_PROVIDER_SMS"], env["VIRA_PROVIDER_PSP"], env["VIRA_PROVIDER_PUSH"] = "mock", "psp-x", "pushe"
 	env["VIRA_JWT_PRIVATE_KEY_FILE"], env["VIRA_JWT_PUBLIC_KEY_FILE"] = "/k/priv.pem", "/k/pub.pem"
-	if _, err := LoadFrom("api", lookup(env)); err != nil {
-		t.Fatalf("valid production config rejected: %v", err)
+	// No real SMS provider adapter exists yet, so production must still refuse to start (fail closed).
+	if _, err := LoadFrom("api", lookup(env)); err == nil || !strings.Contains(err.Error(), "VIRA_PROVIDER_SMS=mock") {
+		t.Fatalf("production with mock SMS accepted: %v", err)
 	}
 }
 

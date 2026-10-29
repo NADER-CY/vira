@@ -1,5 +1,5 @@
 // Package publicapi wires the public HTTP API used by the mobile app and the seller web (doc 07).
-// Phase 1 exposes the platform surface only; business endpoints are added by their phases' modules.
+// Business endpoints are registered by their modules (P2: identity, social, media, moderation).
 package publicapi
 
 import (
@@ -9,6 +9,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/NADER-CY/vira/backend/internal/modules/identity"
+	"github.com/NADER-CY/vira/backend/internal/modules/media"
+	"github.com/NADER-CY/vira/backend/internal/modules/moderation"
+	"github.com/NADER-CY/vira/backend/internal/modules/social"
 	"github.com/NADER-CY/vira/backend/internal/platform/apperr"
 	"github.com/NADER-CY/vira/backend/internal/platform/auth"
 	"github.com/NADER-CY/vira/backend/internal/platform/db"
@@ -30,6 +34,12 @@ type Deps struct {
 	Log            *slog.Logger
 	AllowedOrigins []string
 	Version        string
+
+	// Phase 2 modules.
+	Identity   *identity.Service
+	Social     *social.Service
+	Media      *media.Service
+	Moderation *moderation.Service
 }
 
 // New builds the public router.
@@ -38,7 +48,12 @@ func New(d Deps) *httpx.Router {
 	d.Health.Register(r)
 	a := &api{d}
 	r.HandleFunc(http.MethodGet, "/v1/config", a.config)
-	r.HandleFunc(http.MethodGet, "/v1/me", a.me, d.Verifier.Middleware(true))
+	session := d.Identity.RequireSession(d.Verifier)
+	r.HandleFunc(http.MethodGet, "/v1/me", a.me, session)
+	d.Identity.Routes(r, d.Verifier)
+	d.Social.Routes(r, session)
+	d.Media.Routes(r, session)
+	d.Moderation.Routes(r, session)
 	return r
 }
 
