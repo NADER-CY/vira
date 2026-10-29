@@ -1,0 +1,184 @@
+{
+  "$description": "Mobile design tokens copied verbatim from the original VIRA UI archive (UI LOCKED, Phase 2). Colour sets are the Material 3 palettes embedded in the archive's Tailwind configs: light = 79 screens (background #faf9ff, primary #ba0038), dark = 112 screens (background #0f131c, primary #ffb2ba). Type scale, spacing and radii are the archive's Tailwind theme. Do not edit by hand; change only with an owner decision. Generated output: mobile/lib/core/theme/archive_tokens.g.dart (python3 scripts/gen_tokens.py).",
+  "source": {
+    "archive": "stitch_vira_social_commerce_app/*/code.html (tailwind.config.theme.extend)",
+    "light_example": "mobile_otp_verification_light",
+    "dark_example": "_33"
+  },
+  "color": {
+    "light": {
+      "background": "#faf9ff",
+      "error": "#ba1a1a",
+      "errorContainer": "#ffdad6",
+      "inverseOnSurface": "#edf0ff",
+      "inversePrimary": "#ffb2b7",
+      "inverseSurface": "#2c303b",
+      "onBackground": "#171b26",
+      "onError": "#ffffff",
+      "onErrorContainer": "#93000a",
+      "onPrimary": "#ffffff",
+      "onPrimaryContainer": "#fffbff",
+      "onPrimaryFixed": "#40000d",
+      "onPrimaryFixedVariant": "#92002a",
+      "onSecondary": "#ffffff",
+      "onSecondaryContainer": "#fffbff",
+      "onSecondaryFixed": "#1a0063",
+      "onSecondaryFixedVariant": "#441cc8",
+      "onSurface": "#171b26",
+      "onSurfaceVariant": "#5d3f40",
+      "onTertiary": "#ffffff",
+      "onTertiaryContainer": "#f6fff5",
+      "onTertiaryFixed": "#00210f",
+      "onTertiaryFixedVariant": "#00522d",
+      "outline": "#926e70",
+      "outlineVariant": "#e7bcbe",
+      "primary": "#ba0038",
+      "primaryContainer": "#e80048",
+      "primaryFixed": "#ffdadb",
+      "primaryFixedDim": "#ffb2b7",
+      "secondary": "#5b3cdd",
+      "secondaryContainer": "#7459f7",
+      "secondaryFixed": "#e5deff",
+      "secondaryFixedDim": "#c9bfff",
+      "surface": "#faf9ff",
+      "surfaceBright": "#faf9ff",
+      "surfaceContainer": "#ebedfc",
+      "surfaceContainerHigh": "#e5e7f6",
+      "surfaceContainerHighest": "#dfe2f0",
+      "surfaceContainerLow": "#f1f3ff",
+      "surfaceContainerLowest": "#ffffff",
+      "surfaceDim": "#d7d9e8",
+      "surfaceTint": "#be0039",
+      "surfaceVariant": "#dfe2f0",
+      "tertiary": "#006a3c",
+      "tertiaryContainer": "#00864d",
+      "tertiaryFixed": "#59ffa4",
+      "tertiaryFixedDim": "#1ce388"
+    },
+    "dark": {
+      "background": "#0f131c",
+      "error": "#ffb4ab",
+      "errorContainer": "#93000a",
+      "inverseOnSurface": "#2c3039",
+      "inversePrimary": "#bd0043",
+      "inverseSurface": "#dfe2ee",
+      "onBackground": "#dfe2ee",
+      "onError": "#690005",
+      "onErrorContainer": "#ffdad6",
+      "onPrimary": "#670020",
+      "onPrimaryContainer": "#5a001b",
+      "onPrimaryFixed": "#400011",
+      "onPrimaryFixedVariant": "#910031",
+      "onSecondary": "#2e009c",
+      "onSecondaryContainer": "#baaeff",
+      "onSecondaryFixed": "#1a0063",
+      "onSecondaryFixedVariant": "#441cc8",
+      "onSurface": "#dfe2ee",
+      "onSurfaceVariant": "#e5bdc0",
+      "onTertiary": "#29303f",
+      "onTertiaryContainer": "#232a38",
+      "onTertiaryFixed": "#151c29",
+      "onTertiaryFixedVariant": "#404756",
+      "outline": "#ac888b",
+      "outlineVariant": "#5c3f42",
+      "primary": "#ffb2ba",
+      "primaryContainer": "#ff4f74",
+      "primaryFixed": "#ffd9dc",
+      "primaryFixedDim": "#ffb2ba",
+      "secondary": "#c9bfff",
+      "secondaryContainer": "#4720ca",
+      "secondaryFixed": "#e5deff",
+      "secondaryFixedDim": "#c9bfff",
+      "surface": "#0f131c",
+      "surfaceBright": "#353942",
+      "surfaceContainer": "#1c2028",
+      "surfaceContainerHigh": "#262a33",
+      "surfaceContainerHighest": "#31353e",
+      "surfaceContainerLow": "#181c24",
+      "surfaceContainerLowest": "#0a0e16",
+      "surfaceDim": "#0f131c",
+      "surfaceTint": "#ffb2ba",
+      "surfaceVariant": "#31353e",
+      "tertiary": "#c0c6d9",
+      "tertiaryContainer": "#8a91a2",
+      "tertiaryFixed": "#dce2f6",
+      "tertiaryFixedDim": "#c0c6d9"
+    }
+  },
+  "type": {
+    "headlineXl": {
+      "size": 32,
+      "line": 40,
+      "weight": 800
+    },
+    "headlineLg": {
+      "size": 24,
+      "line": 32,
+      "weight": 700
+    },
+    "headlineMd": {
+      "size": 20,
+      "line": 28,
+      "weight": 700
+    },
+    "headlineSm": {
+      "size": 18,
+      "line": 24,
+      "weight": 600
+    },
+    "priceDisplay": {
+      "size": 20,
+      "line": 26,
+      "weight": 700
+    },
+    "bodyLg": {
+      "size": 16,
+      "line": 24,
+      "weight": 400
+    },
+    "bodyMd": {
+      "size": 14,
+      "line": 20,
+      "weight": 400
+    },
+    "bodySm": {
+      "size": 12,
+      "line": 18,
+      "weight": 400
+    },
+    "labelLg": {
+      "size": 14,
+      "line": 20,
+      "weight": 600
+    },
+    "labelMd": {
+      "size": 12,
+      "line": 16,
+      "weight": 600
+    },
+    "labelSm": {
+      "size": 11,
+      "line": 14,
+      "weight": 500
+    }
+  },
+  "space": {
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "margin": 16,
+    "marginMobile": 12,
+    "gutter": 12,
+    "gutterMobile": 8
+  },
+  "radius": {
+    "sm": 4,
+    "lg": 8,
+    "xl": 12,
+    "x2l": 16,
+    "x3l": 24,
+    "full": 9999
+  }
+}

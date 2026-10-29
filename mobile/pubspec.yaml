@@ -15,6 +15,8 @@ dependencies:
   go_router: ^16.2.0
   http: ^1.5.0
   shared_preferences: ^2.5.3
+  flutter_secure_storage: ^9.2.4
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
@@ -36,3 +38,7 @@ flutter:
           weight: 700
         - asset: assets/fonts/Vazirmatn-ExtraBold.ttf
           weight: 800
+    # The UI archive's icon set (variable font, subset by scripts/gen_symbols.py).
+    - family: MaterialSymbolsOutlined
+      fonts:
+        - asset: assets/fonts/MaterialSymbolsOutlined.ttf

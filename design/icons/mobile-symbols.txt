@@ -1,0 +1,21 @@
+# Material Symbols Outlined glyphs used by the mobile app (names as in the UI archive).
+# Regenerate the subset font + Dart constants: python3 scripts/gen_symbols.py <MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].ttf>
+# Source font: github.com/google/material-design-icons variablefont/ (Apache-2.0).
+account_balance_wallet account_circle add add_a_photo add_circle add_photo_alternate add_shopping_cart admin_panel_settings
+alternate_email apparel apps arrow_back arrow_back_ios arrow_back_ios_new arrow_forward assignment_ind auto_awesome auto_stories
+badge bedtime block bolt bookmark bookmark_border call campaign cancel celebration chat_bubble chat_bubble_outline check
+check_box check_box_outline_blank check_circle checkroom chevron_left chevron_right close cloud_off cloud_sync collections
+comments_disabled content_copy copyright crop_rotate dark_mode delete delete_forever delete_sweep description devices
+do_not_disturb_on done_all dynamic_feed edit edit_note enhanced_encryption error expand_more explore favorite female filter_alt
+flag forum forward_to_inbox gavel gpp_good gpp_maybe grid_on group hdr_auto help_center help_outline history_toggle_off home
+hourglass_empty image info inventory_2 keep key lan laptop_chromebook laptop_mac light_mode link live_tv local_fire_department
+local_mall local_offer local_shipping location_on lock lock_open lock_reset login logout mail male mobile_rotate_lock mood moped
+more_horiz more_vert movie navigate_before neurology notifications notifications_active notifications_off palette password
+pause_circle pending_actions percent person person_add person_remove person_search phone_iphone phonelink_lock photo_camera
+photo_library pin pin_drop play_arrow play_circle policy power_settings_new print progress_activity public radio_button_checked
+radio_button_unchecked receipt_long record_voice_over refresh remove_moderator reply report rocket_launch save schedule search
+security security_update_good security_update_warning sell send sensors sentiment_dissatisfied sentiment_satisfied settings
+settings_brightness share shield shield_person shield_with_heart shopping_bag shopping_cart shopping_cart_checkout smartphone sms
+sort star star_half stars storefront support_agent swap_horiz sync sync_alt task_alt timer toggle_on touch_app tune verified
+verified_user videocam visibility visibility_off volume_up vpn_key warning wifi_off workspace_premium
+center_focus_strong mic

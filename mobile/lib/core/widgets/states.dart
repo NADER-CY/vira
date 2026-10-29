@@ -1,28 +1,37 @@
 import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
-import '../theme/tokens.g.dart';
+import '../theme/symbols.g.dart';
+import '../ui/kit.dart';
 
-/// UI state catalogue (doc 09 §5): loading skeleton, empty, error with retry, feature disabled / locked.
+/// UI state catalogue (doc 09 §5): loading, empty, error with retry, feature not yet active. Drawn with the
+/// archive's empty-card pattern (icon disc, title, text, pill action).
+String errorTitle(Object e) => e is ApiException ? e.title : messageFor('internal_error');
+
+String? errorDetail(Object e) => e is ApiException && e.traceId != null ? 'کد پیگیری: ⁦${e.traceId}⁩' : null;
+
 class LoadingView extends StatelessWidget {
   const LoadingView({super.key, this.rows = 3});
   final int rows;
 
   @override
   Widget build(BuildContext context) {
-    final c = Theme.of(context).colorScheme.surfaceContainerHighest;
+    final c = Theme.of(context).colorScheme.surfaceContainerHigh;
     return Semantics(
       label: 'در حال بارگذاری',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < rows; i++)
-            Container(
-              height: i == 0 ? 24 : 16,
-              margin: const EdgeInsetsDirectional.only(bottom: ViraTokens.space3, end: 0),
-              decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(ViraTokens.radiusSm)),
-            ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < rows; i++)
+              Container(
+                height: i == 0 ? 24 : 16,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(8)),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -37,25 +46,56 @@ class EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context);
+    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: ViraTokens.space6, vertical: ViraTokens.space8),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: t.colorScheme.primaryContainer,
-            child: Icon(icon, color: t.colorScheme.onPrimaryContainer, size: 28),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(color: cs.primaryContainer.withValues(alpha: 0.2), shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Sy(icon, size: 26, color: cs.primary),
           ),
-          const SizedBox(height: ViraTokens.space4),
-          Text(title, style: t.textTheme.titleMedium, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          Text(title, style: tw(18, 24, 700, cs.onSurface), textAlign: TextAlign.center),
           if (message != null) ...[
-            const SizedBox(height: ViraTokens.space2),
-            Text(message!, style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
+            const SizedBox(height: 4),
+            Text(message!, style: tw(12, 18, 400, cs.onSurfaceVariant), textAlign: TextAlign.center),
           ],
-          if (action != null) ...[const SizedBox(height: ViraTokens.space4), action!],
+          if (action != null) ...[const SizedBox(height: 14), action!],
         ],
+      ),
+    );
+  }
+}
+
+/// Pill action used inside empty / error states (`rounded-full bg-surface-container-high px-5 py-2`).
+class PillButton extends StatelessWidget {
+  const PillButton({super.key, required this.label, required this.icon, required this.onTap});
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Material(
+      color: cs.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Sy(icon, size: 18, color: cs.onSurface),
+            const SizedBox(width: 4),
+            Text(label, style: tw(12, 16, 600, cs.onSurface)),
+          ]),
+        ),
       ),
     );
   }
@@ -67,18 +107,15 @@ class ErrorView extends StatelessWidget {
   final VoidCallback? onRetry;
 
   @override
-  Widget build(BuildContext context) {
-    final e = error is ApiException ? error as ApiException : null;
-    return EmptyView(
-      icon: Icons.cloud_off_outlined,
-      title: e?.title ?? messageFor('internal_error'),
-      message: e?.traceId != null ? 'کد پیگیری: \u2066${e!.traceId}\u2069' : null,
-      action: onRetry == null ? null : OutlinedButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh), label: const Text('تلاش دوباره')),
-    );
-  }
+  Widget build(BuildContext context) => EmptyView(
+        icon: Sym.cloudOff,
+        title: errorTitle(error),
+        message: errorDetail(error),
+        action: onRetry == null ? null : PillButton(label: 'تلاش دوباره', icon: Sym.refresh, onTap: onRetry!),
+      );
 }
 
-/// A capability that is on the roadmap but not active yet. [locked] = regulated, behind an approval gate.
+/// A capability that keeps its place from the archive but is not active yet. [locked] = regulated, behind a gate.
 class FeatureNotYetView extends StatelessWidget {
   const FeatureNotYetView({super.key, required this.title, required this.phase, this.locked = false, this.icon});
   final String title;
@@ -88,7 +125,7 @@ class FeatureNotYetView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EmptyView(
-        icon: icon ?? (locked ? Icons.lock_outline : Icons.hourglass_empty),
+        icon: icon ?? (locked ? Sym.lock : Sym.hourglassEmpty),
         title: title,
         message: locked
             ? 'این قابلیت تا عبور از دروازهٔ $phase (تأیید حقوقی، امنیتی و تأمین‌کننده) قفل است.'
@@ -106,15 +143,15 @@ class PhaseBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: ViraTokens.space2, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: locked ? s.errorContainer : s.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(ViraTokens.radiusFull),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (locked) Icon(Icons.lock, size: 12, color: s.onErrorContainer),
+        if (locked) Sy(Sym.lock, size: 12, color: s.onErrorContainer),
         if (locked) const SizedBox(width: 4),
-        Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: locked ? s.onErrorContainer : s.onSurfaceVariant)),
+        Text(label, style: tw(11, 14, 500, locked ? s.onErrorContainer : s.onSurfaceVariant)),
       ]),
     );
   }
