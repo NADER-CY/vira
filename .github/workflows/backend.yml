@@ -33,28 +33,32 @@ jobs:
       VIRA_TEST_PG_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       VIRA_REQUIRE_DB: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
       - name: Verify module checksums
-        run: go mod verify && go mod tidy -diff
+        run: ../.github/scripts/run.sh "go mod" bash -c "go mod verify && go mod tidy -diff"
       - name: gofmt
         run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
       - name: go vet
-        run: go vet ./...
+        run: ../.github/scripts/run.sh "go vet" go vet ./...
       - name: Build all runtimes
         run: |
           mkdir -p bin
           for c in api admin-api worker realtime media migrate; do go build -trimpath -o bin/$c ./cmd/$c; done
           ls -l bin
       - name: Unit + integration tests (real PostgreSQL)
-        run: go test -count=1 -race -coverprofile=coverage.out -json ./... > test-report.json; rc=$?; go run ./scripts/testsummary < test-report.json; exit $rc
+        run: |
+          set +e
+          go test -count=1 -race -coverprofile=coverage.out -json ./... > test-report.json; rc=$?
+          ../.github/scripts/run.sh "go test" go run ./scripts/testsummary -fail-on-failure < test-report.json || exit 1
+          exit $rc
       - name: Coverage
         if: always()
         run: go tool cover -func=coverage.out | tail -1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: backend-test-report
@@ -62,7 +66,7 @@ jobs:
             backend/test-report.json
             backend/coverage.out
           retention-days: 14
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: backend-binaries
           path: backend/bin/
@@ -85,8 +89,8 @@ jobs:
       VIRA_ENV: test
       VIRA_DB_MIGRATOR_URL: postgres://migrator:migrator@localhost:5432/vira?sslmode=disable
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
@@ -96,7 +100,7 @@ jobs:
           psql -h localhost -U postgres -v ON_ERROR_STOP=1 -c "ALTER ROLE migrator PASSWORD 'migrator'" -c "CREATE DATABASE vira OWNER migrator"
       - name: Up, down to zero, up again (reversibility)
         run: |
-          go run ./cmd/migrate up
+          ../.github/scripts/run.sh "migrate up" go run ./cmd/migrate up
           go run ./cmd/migrate status
           n=$(ls migrations/*.up.sql | wc -l)
           go run ./cmd/migrate down "$n"

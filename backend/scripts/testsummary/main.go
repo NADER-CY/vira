@@ -4,6 +4,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"sort"
@@ -17,6 +18,8 @@ type event struct {
 }
 
 func main() {
+	failOnFailure := flag.Bool("fail-on-failure", false, "exit 1 when any test or package failed")
+	flag.Parse()
 	counts := map[string]int{}
 	output := map[string][]string{}
 	var failed []string
@@ -53,4 +56,7 @@ func main() {
 		}
 	}
 	fmt.Printf("tests: %d passed, %d failed, %d skipped\n", counts["pass"], counts["fail"], counts["skip"])
+	if *failOnFailure && len(failed) > 0 {
+		os.Exit(1)
+	}
 }
