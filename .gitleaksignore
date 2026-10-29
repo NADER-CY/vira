@@ -1,0 +1,2 @@
+# Public RFC 6238 test vector (base32 of "12345678901234567890") in a unit test — not a secret.
+528d97af083be8ee45643f55b174feca77198db5:backend/internal/platform/secure/secure_test.go:generic-api-key:38

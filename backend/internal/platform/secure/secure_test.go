@@ -35,7 +35,7 @@ func TestPasswordHashRoundTrip(t *testing.T) {
 
 // RFC 6238 Appendix B test vectors (SHA1, secret "12345678901234567890"), truncated to 6 digits.
 func TestTOTPRFC6238Vectors(t *testing.T) {
-	secret := "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ" // base32("12345678901234567890")
+	secret := "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ" // base32("12345678901234567890") — public RFC test vector, not a secret. gitleaks:allow
 	vectors := map[int64]string{59: "287082", 1111111109: "081804", 1111111111: "050471", 1234567890: "005924", 2000000000: "279037"}
 	for ts, want := range vectors {
 		got, err := TOTPCode(secret, TOTPStep(time.Unix(ts, 0)))

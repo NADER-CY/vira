@@ -177,7 +177,17 @@ def admin():
             "parameters": {"CSRF": {"name": "X-VIRA-CSRF", "in": "header", "required": True, "schema": {"type": "string", "enum": ["1"]}}}},
     }
 
-def dump(doc): return json.dumps(doc, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
+def normalise(doc):
+    """Every operation states its security explicitly ([] = anonymous) and has a summary (redocly recommended rules)."""
+    for item in doc["paths"].values():
+        for op in item.values():
+            if not isinstance(op, dict) or "operationId" not in op:
+                continue
+            op.setdefault("security", [])
+            op.setdefault("summary", op.get("description", op["operationId"]).split(".")[0][:120])
+    return doc
+
+def dump(doc): return json.dumps(normalise(doc), ensure_ascii=False, indent=2, sort_keys=False) + "\n"
 
 if __name__ == "__main__":
     out = {"contracts/openapi/public.v1.json": dump(public()), "contracts/openapi/admin.v1.json": dump(admin())}

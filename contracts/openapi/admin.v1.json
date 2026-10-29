@@ -30,7 +30,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/health/ready": {
@@ -61,7 +62,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/v1/auth/login": {
@@ -127,7 +129,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/v1/auth/mfa": {
@@ -181,7 +184,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/v1/auth/logout": {
@@ -214,7 +218,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "adminLogout"
       }
     },
     "/v1/auth/me": {
@@ -249,7 +254,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "adminMe"
       }
     },
     "/v1/admin/system/status": {
@@ -295,7 +301,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "systemStatus"
       }
     },
     "/v1/admin/flags": {
@@ -352,7 +359,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "listFlags"
       }
     },
     "/v1/admin/flags/{key}": {
@@ -545,7 +553,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "listConfig"
       }
     },
     "/v1/admin/audit-events": {
@@ -655,7 +664,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "listAuditEvents"
       }
     },
     "/v1/admin/roles": {
@@ -712,7 +722,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "listRoles"
       }
     }
   },
