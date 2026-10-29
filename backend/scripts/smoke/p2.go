@@ -11,7 +11,9 @@ var sixDigits = regexp.MustCompile(`[0-9]{6}`)
 
 type appUser struct{ id, token string }
 
-func bearer(u appUser) map[string]string { return map[string]string{"Authorization": "Bearer " + u.token} }
+func bearer(u appUser) map[string]string {
+	return map[string]string{"Authorization": "Bearer " + u.token}
+}
 
 // signUp registers a user through the real OTP flow: the code is read from the SMS simulator inbox.
 func signUp(api, devsim, phone string) (appUser, bool) {
@@ -37,7 +39,7 @@ func signUp(api, devsim, phone string) (appUser, bool) {
 	}
 	check("6-digit OTP delivered to the SMS simulator for "+phone, len(otp) == 6, "no code")
 	code, in, raw := call("POST", api+"/v1/auth/otp/verify", map[string]any{"challenge_id": ch["challenge_id"], "code": otp,
-		"device": map[string]any{"id": "smoke-device-" + phone, "platform": "android"},
+		"device":   map[string]any{"id": "smoke-device-" + phone, "platform": "android"},
 		"consents": map[string]any{"terms": true, "privacy": true, "age_confirmation": true, "text_version": "smoke"}}, nil)
 	check("sign-up with OTP for "+phone, code == 200 && in["access_token"] != nil, fmt.Sprintf("%d %s", code, raw))
 	if code != 200 {
