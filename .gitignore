@@ -55,6 +55,6 @@ web/shared/src/api/*.d.ts
 mobile/test-report.json
 mobile/apk.sha256
 web/test-results/
-evidence/
+/evidence/
 *.iml
 mobile/test/failures/
