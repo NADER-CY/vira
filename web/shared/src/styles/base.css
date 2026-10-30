@@ -170,7 +170,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .v-tab { display: inline-flex; align-items: center; gap: var(--space-2); padding-block: var(--space-3); border: 0; border-block-end: 2px solid transparent; background: transparent; color: var(--color-on-surface-variant); font: var(--type-label-md); cursor: pointer; white-space: nowrap; }
 .v-tab[aria-selected="true"] { color: var(--color-primary); border-block-end-color: var(--color-primary); font-weight: 700; }
 .v-tab:disabled { cursor: default; opacity: 0.6; }
-.v-desk { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
+.v-desk { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
+.v-table .nowrap { white-space: nowrap; }
 .v-desk__panel { display: grid; gap: var(--space-4); position: sticky; inset-block-start: 88px; }
 .v-desk__section { display: grid; gap: var(--space-2); }
 .v-desk__section h3 { font: var(--type-label-md); display: flex; align-items: center; gap: var(--space-2); }

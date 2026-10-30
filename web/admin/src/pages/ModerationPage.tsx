@@ -114,7 +114,7 @@ export function ModerationPage() {
                 <tbody>
                   {rows.map((r) => (
                     <tr key={r.id} data-selected={selected?.id === r.id || undefined}>
-                      <td><span className="ltr tabular">#{r.id.slice(0, 8)}</span></td>
+                      <td className="nowrap"><span className="ltr tabular">#{r.id.slice(0, 8)}</span></td>
                       <td>{r.reporter_handle ? <span className="ltr">@{r.reporter_handle}</span> : "—"}</td>
                       <td>
                         <div className="v-person">
@@ -122,13 +122,13 @@ export function ModerationPage() {
                           <div>
                             <div className="v-person__name">{targetLabel[r.target_type]?.label ?? r.target_type}
                               {r.target_owner_handle && <> · <span className="ltr">@{r.target_owner_handle}</span></>}</div>
-                            {r.target_preview && <div className="v-person__sub" style={{ maxInlineSize: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.target_preview}</div>}
+                            {r.target_preview && <div className="v-person__sub" style={{ maxInlineSize: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.target_preview}</div>}
                           </div>
                         </div>
                       </td>
                       <td><Badge tone="danger">{reasonLabel[r.reason] ?? r.reason}</Badge>
                         {(r.open_reports_on_target ?? 0) > 1 && <div className="v-person__sub">{toPersianDigits(r.open_reports_on_target ?? 0)} گزارش روی این مورد</div>}</td>
-                      <td>{formatRelative(r.created_at)}</td>
+                      <td className="nowrap">{formatRelative(r.created_at)}</td>
                       <td><Badge tone={stateLabel[r.state]?.tone ?? "neutral"}>{stateLabel[r.state]?.label ?? r.state}</Badge></td>
                       <td><Button variant={r.state === "open" ? "secondary" : "ghost"} onClick={() => setSelected(r)}>{r.state === "open" ? "بررسی" : "مشاهده"}</Button></td>
                     </tr>

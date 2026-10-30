@@ -154,8 +154,8 @@ export function UsersPage() {
                       </td>
                       <td><span className="ltr tabular">{u.phone_masked || "—"}</span></td>
                       <td><Badge tone="info">کاربر</Badge></td>
-                      <td className="tabular">{formatJalaliDate(u.created_at)}</td>
-                      <td>{u.last_login_at ? formatRelative(u.last_login_at) : "—"}</td>
+                      <td className="tabular nowrap">{formatJalaliDate(u.created_at)}</td>
+                      <td className="nowrap">{u.last_login_at ? formatRelative(u.last_login_at) : "—"}</td>
                       <td>
                         <StatusBadge status={u.status} />
                         {(u.open_reports ?? 0) > 0 && <div className="v-person__sub" style={{ marginBlockStart: 4 }}>{toPersianDigits(u.open_reports ?? 0)} گزارش باز</div>}
