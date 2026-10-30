@@ -158,6 +158,33 @@ func (s *Service) hFile(w http.ResponseWriter, r *http.Request) {
 
 // ---------- staff (admin realm; called by the admin API with the app_admin pool) ----------
 
+// Summary feeds the KPI cards of the moderation console. "Today" is the calendar day in Tehran.
+type Summary struct {
+	Open           int `json:"open"`
+	OpenPosts      int `json:"open_posts"`
+	OpenComments   int `json:"open_comments"`
+	OpenUsers      int `json:"open_users"`
+	ActionedToday  int `json:"actioned_today"`
+	DismissedToday int `json:"dismissed_today"`
+	Total          int `json:"total"`
+}
+
+// Summarize counts the report queue.
+func (s *Service) Summarize(ctx context.Context) (Summary, error) {
+	var x Summary
+	err := s.Pool.QueryRow(ctx, `WITH t AS (SELECT date_trunc('day', now() AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'Asia/Tehran' AS d)
+		SELECT count(*) FILTER (WHERE state = 'open'),
+		count(*) FILTER (WHERE state = 'open' AND target_type = 'post'),
+		count(*) FILTER (WHERE state = 'open' AND target_type = 'comment'),
+		count(*) FILTER (WHERE state = 'open' AND target_type = 'user'),
+		count(*) FILTER (WHERE state = 'actioned' AND resolved_at >= t.d),
+		count(*) FILTER (WHERE state = 'dismissed' AND resolved_at >= t.d),
+		count(*)
+		FROM moderation.reports, t`).
+		Scan(&x.Open, &x.OpenPosts, &x.OpenComments, &x.OpenUsers, &x.ActionedToday, &x.DismissedToday, &x.Total)
+	return x, err
+}
+
 // Query filters the report queue.
 type Query struct {
 	State      string

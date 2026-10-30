@@ -112,6 +112,30 @@ func (a *AdminService) ListUsers(ctx context.Context, q AdminQuery) ([]AdminUser
 	return out, rows.Err()
 }
 
+// AdminSummary feeds the KPI cards of the users console. "Today" is the calendar day in Tehran.
+type AdminSummary struct {
+	Total          int `json:"total"`
+	Active         int `json:"active"`
+	SignupsToday   int `json:"signups_today"`
+	Restricted     int `json:"restricted"`
+	Suspended      int `json:"suspended"`
+	ActiveSessions int `json:"active_sessions"`
+}
+
+// Summary counts accounts by status (deleted accounts excluded) and live sessions.
+func (a *AdminService) Summary(ctx context.Context) (AdminSummary, error) {
+	var s AdminSummary
+	err := a.Pool.QueryRow(ctx, `SELECT count(*),
+		count(*) FILTER (WHERE status = 'active'),
+		count(*) FILTER (WHERE created_at >= (date_trunc('day', now() AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'Asia/Tehran')),
+		count(*) FILTER (WHERE status = 'restricted'),
+		count(*) FILTER (WHERE status = 'suspended'),
+		(SELECT count(*) FROM identity.sessions WHERE revoked_at IS NULL AND expires_at > now())
+		FROM identity.users WHERE status <> 'deleted'`).
+		Scan(&s.Total, &s.Active, &s.SignupsToday, &s.Restricted, &s.Suspended, &s.ActiveSessions)
+	return s, err
+}
+
 // StatusChange is one entry of a user's status history.
 type StatusChange struct {
 	From      string    `json:"from"`

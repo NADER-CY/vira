@@ -20,6 +20,8 @@ import (
 
 func (a *api) routesP2(r *httpx.Router) {
 	authn, perm := a.requireSession, a.requirePermission
+	r.HandleFunc(http.MethodGet, "/v1/admin/users/summary", a.usersSummary, authn, perm("users.read"))
+	r.HandleFunc(http.MethodGet, "/v1/admin/reports/summary", a.reportsSummary, authn, perm("reports.read"))
 	r.HandleFunc(http.MethodGet, "/v1/admin/users", a.listUsers, authn, perm("users.read"))
 	r.HandleFunc(http.MethodGet, "/v1/admin/users/{id}", a.getUser, authn, perm("users.read"))
 	r.HandleFunc(http.MethodPost, "/v1/admin/users/{id}/status", a.setUserStatus, authn, perm("users.write"))
@@ -66,6 +68,25 @@ func (a *api) auditView(r *http.Request, tx db.Tx, action, targetType, targetID 
 	_, err := audit.Record(r.Context(), tx, audit.Event{ActorType: "admin", ActorID: ad.ID, Action: action, TargetType: targetType,
 		TargetID: targetID, IP: m.IP, UserAgent: m.UA, TraceID: m.TraceID, Metadata: md})
 	return err
+}
+
+// usersSummary returns aggregate counts only (no personal data), so it is not audited as a PII view.
+func (a *api) usersSummary(w http.ResponseWriter, r *http.Request) {
+	s, err := a.d.Users.Summary(r.Context())
+	if err != nil {
+		httpx.WriteError(w, r, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, s)
+}
+
+func (a *api) reportsSummary(w http.ResponseWriter, r *http.Request) {
+	s, err := a.d.Moderation.Summarize(r.Context())
+	if err != nil {
+		httpx.WriteError(w, r, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, s)
 }
 
 func (a *api) listUsers(w http.ResponseWriter, r *http.Request) {

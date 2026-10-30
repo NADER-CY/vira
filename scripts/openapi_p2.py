@@ -239,6 +239,11 @@ def admin_paths(paths, schemas):
             o["requestBody"] = body
         paths.setdefault(path, {})[method] = o
     page = [_q("cursor", {"type": "string"}), _q("limit", {"type": "integer", "minimum": 1, "maximum": 100})]
+    def _ints(*names): return {"type": "object", "required": list(names), "properties": {n: {"type": "integer"} for n in names}}
+    op("get", "/v1/admin/users/summary", "adminUsersSummary", "users", "users.read", "Account counts for the users console (no personal data)",
+       {"200": _ok(_ints("total", "active", "signups_today", "restricted", "suspended", "active_sessions"))})
+    op("get", "/v1/admin/reports/summary", "adminReportsSummary", "reports", "reports.read", "Report-queue counts for the moderation console",
+       {"200": _ok(_ints("open", "open_posts", "open_comments", "open_users", "actioned_today", "dismissed_today", "total"))})
     op("get", "/v1/admin/users", "adminListUsers", "users", "users.read", "Users (q: handle prefix, user id or exact phone; status filter)",
        {"200": _ok(_page("AdminUser")), "422": _problem("Bad filter")},
        params=[_q("q", {"type": "string"}), _q("status", {"type": "string", "enum": ["active", "restricted", "suspended", "deletion_pending", "deleted"]})] + page)

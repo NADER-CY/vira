@@ -141,6 +141,11 @@ func TestUserManagement(t *testing.T) {
 	if st, r, _ := c.do("POST", "/v1/admin/users/"+u2.UserID+"/sessions/revoke", nil, nil); st != 200 || r["revoked"] != float64(1) {
 		t.Fatalf("revoke: %d %v", st, r)
 	}
+	// Summary: counts only, available to readers of the user list.
+	if st, sum, _ := c.do("GET", "/v1/admin/users/summary", nil, nil); st != 200 || sum["total"] != float64(2) || sum["suspended"] != float64(1) ||
+		sum["active"] != float64(1) || sum["signups_today"] != float64(2) || sum["active_sessions"] != float64(0) {
+		t.Fatalf("summary: %d %v", st, sum)
+	}
 	var target string
 	var nEv int
 	_ = e.d.Pool("superuser").QueryRow(context.Background(), `SELECT count(*), max(target_id) FROM platform.audit_events WHERE action = 'users.status_changed'`).Scan(&nEv, &target)
@@ -162,6 +167,9 @@ func TestUserManagement(t *testing.T) {
 	enrO := e.createAdmin(t, "op@vira.test", "operator")
 	co := e.client(t)
 	e.login(t, co, "op@vira.test", enrO, 0)
+	if st, _, _ := co.do("GET", "/v1/admin/reports/summary", nil, nil); st != 403 {
+		t.Fatalf("operator reports summary: %d", st)
+	}
 	if st, _, _ := co.do("GET", "/v1/admin/reports", nil, nil); st != 403 {
 		t.Fatalf("operator reports: %d", st)
 	}
@@ -227,6 +235,10 @@ func TestReportReview(t *testing.T) {
 	rep4, _ := app.mod.File(ctx, r2.UserID, "user", author.UserID, "harassment", "", audit.Event{})
 	if st, _, _ := c.do("POST", "/v1/admin/reports/"+rep4.ID+"/resolve", map[string]string{"resolution": "restrict_user", "note": "هشدار"}, nil); st != 200 {
 		t.Fatalf("restrict: %d", st)
+	}
+	if st, sum, _ := c.do("GET", "/v1/admin/reports/summary", nil, nil); st != 200 || sum["open"] != float64(0) || sum["actioned_today"] != float64(3) ||
+		sum["dismissed_today"] != float64(1) || sum["total"] != float64(4) {
+		t.Fatalf("reports summary: %d %v", st, sum)
 	}
 	var status string
 	_ = e.d.Pool("superuser").QueryRow(context.Background(), `SELECT status FROM identity.users WHERE id = $1`, author.UserID).Scan(&status)

@@ -726,6 +726,160 @@
         "summary": "listRoles"
       }
     },
+    "/v1/admin/users/summary": {
+      "get": {
+        "operationId": "adminUsersSummary",
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-permission": "users.read",
+        "summary": "Account counts for the users console (no personal data)",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "total",
+                    "active",
+                    "signups_today",
+                    "restricted",
+                    "suspended",
+                    "active_sessions"
+                  ],
+                  "properties": {
+                    "total": {
+                      "type": "integer"
+                    },
+                    "active": {
+                      "type": "integer"
+                    },
+                    "signups_today": {
+                      "type": "integer"
+                    },
+                    "restricted": {
+                      "type": "integer"
+                    },
+                    "suspended": {
+                      "type": "integer"
+                    },
+                    "active_sessions": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/reports/summary": {
+      "get": {
+        "operationId": "adminReportsSummary",
+        "tags": [
+          "reports"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-permission": "reports.read",
+        "summary": "Report-queue counts for the moderation console",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "open",
+                    "open_posts",
+                    "open_comments",
+                    "open_users",
+                    "actioned_today",
+                    "dismissed_today",
+                    "total"
+                  ],
+                  "properties": {
+                    "open": {
+                      "type": "integer"
+                    },
+                    "open_posts": {
+                      "type": "integer"
+                    },
+                    "open_comments": {
+                      "type": "integer"
+                    },
+                    "open_users": {
+                      "type": "integer"
+                    },
+                    "actioned_today": {
+                      "type": "integer"
+                    },
+                    "dismissed_today": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/admin/users": {
       "get": {
         "operationId": "adminListUsers",
