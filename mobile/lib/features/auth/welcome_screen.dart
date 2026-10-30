@@ -169,7 +169,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   const Text('🇮🇷', style: TextStyle(fontSize: 16, height: 1)),
                   const SizedBox(width: 6),
-                  Text('⁦+۹۸⁩', style: tw(12, 16, 600, cs.primaryFixed)),
+                  Text('\u2066+۹۸\u2069', style: tw(12, 16, 600, cs.primaryFixed)),
                 ]),
               ),
               Expanded(

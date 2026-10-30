@@ -115,8 +115,8 @@ class _FollowListScreenState extends ConsumerState<FollowListScreen> {
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(color: cs.surfaceContainerLow, borderRadius: BorderRadius.circular(12)),
           child: Row(children: [
-            _tabButton(cs, false, p == null ? null : p.stats.followers, 'دنبال‌کننده'),
-            _tabButton(cs, true, p == null ? null : p.stats.following, 'دنبال‌شونده'),
+            _tabButton(cs, false, p?.stats.followers, 'دنبال‌کننده'),
+            _tabButton(cs, true, p?.stats.following, 'دنبال‌شونده'),
           ]),
         ),
         const SizedBox(height: 12),

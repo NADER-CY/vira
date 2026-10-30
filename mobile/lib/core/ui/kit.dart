@@ -83,7 +83,7 @@ class RoundIconButton extends StatelessWidget {
                 ),
               ),
             ),
-            if (badge != null) badge!,
+            ?badge,
           ]),
         ),
       );

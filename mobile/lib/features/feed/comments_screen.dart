@@ -273,7 +273,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                             key: const Key('comment-send'),
                             borderRadius: BorderRadius.circular(8),
                             onTap: _sending ? null : _send,
-                            child: SizedBox(width: 36, height: 36, child: Center(child: Sy(Sym.send, size: 20, color: Colors.white, semantic: 'ارسال'))),
+                            child: const SizedBox(width: 36, height: 36, child: Center(child: Sy(Sym.send, size: 20, color: Colors.white, semantic: 'ارسال'))),
                           ),
                         ),
                       ]),

@@ -68,4 +68,4 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
   }
 }
 
-String isolateHandle(String h) => '⁨@$h⁩';
+String isolateHandle(String h) => '\u2068@$h\u2069';

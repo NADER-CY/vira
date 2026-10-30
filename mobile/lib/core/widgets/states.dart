@@ -8,7 +8,7 @@ import '../ui/kit.dart';
 /// archive's empty-card pattern (icon disc, title, text, pill action).
 String errorTitle(Object e) => e is ApiException ? e.title : messageFor('internal_error');
 
-String? errorDetail(Object e) => e is ApiException && e.traceId != null ? 'کد پیگیری: ⁦${e.traceId}⁩' : null;
+String? errorDetail(Object e) => e is ApiException && e.traceId != null ? 'کد پیگیری: \u2066${e.traceId}\u2069' : null;
 
 class LoadingView extends StatelessWidget {
   const LoadingView({super.key, this.rows = 3});

@@ -129,7 +129,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   String get _masked {
     final p = widget.args.phone;
-    return '⁦${toPersianDigits('${p.substring(0, 4)}***${p.substring(p.length - 4)}')}⁩';
+    return '\u2066${toPersianDigits('${p.substring(0, 4)}***${p.substring(p.length - 4)}')}\u2069';
   }
 
   @override
@@ -233,7 +233,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   Sy(Sym.schedule, size: 18, color: cs.primary),
                   const SizedBox(width: 4),
                   Text.rich(TextSpan(children: [
-                    TextSpan(text: '⁦$mm⁩', style: tw(12, 16, 700, cs.onSurface, spacing: 0.6)),
+                    TextSpan(text: '\u2066$mm\u2069', style: tw(12, 16, 700, cs.onSurface, spacing: 0.6)),
                     TextSpan(text: ' تا امکان ارسال مجدد کد', style: tw(12, 16, 600, cs.onSurfaceVariant)),
                   ])),
                 ]),
