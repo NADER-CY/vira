@@ -134,6 +134,9 @@ void main() {
       expect(find.textContaining('ترکیب رنگ لیمویی'), findsOneWidget);
       expect(find.text('#استایل_تابستانه'), findsOneWidget);
       expect(find.text('۱ / ۳'), findsOneWidget);
+      // The action row sits under the bottom bar on the test phone: scroll the feed (vertical scrollable) up.
+      await tester.drag(find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down).first, const Offset(0, -260));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('like-p0')));
       await tester.pumpAndSettle();
       expect(called(api, '/v1/posts/p0/like', 'PUT'), isTrue);
@@ -297,7 +300,9 @@ void main() {
       await scrollTo(tester, find.text('کیف پول و کارت‌ها'));
       await tester.tap(find.text('کیف پول و کارت‌ها'));
       await tester.pump();
-      expect(find.textContaining('دروازهٔ G1'), findsOneWidget);
+      // The tile's lock label and the snackbar both name the gate.
+      expect(find.textContaining('کیف پول تا عبور از دروازهٔ G1'), findsOneWidget);
+      expect(find.textContaining('دروازهٔ G1'), findsNWidgets(2));
     });
   });
 }
