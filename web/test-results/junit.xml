@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="19" failures="0" errors="0" time="1.447466512">
+    <testsuite name="admin/src/App.test.tsx" timestamp="2026-10-30T07:43:03.538Z" hostname="runnervm48cm3" tests="4" failures="0" errors="0" skipped="0" time="1.001076118">
+        <testcase classname="admin/src/App.test.tsx" name="Super Admin shell &gt; redirects anonymous users to the two-step login and signs in with password + TOTP" time="0.726831055">
+        </testcase>
+        <testcase classname="admin/src/App.test.tsx" name="Super Admin shell &gt; shows regulated flags locked with their gate and their switch disabled" time="0.086027918">
+        </testcase>
+        <testcase classname="admin/src/App.test.tsx" name="Super Admin shell &gt; dashboard lists locked regulated capabilities and dependency health" time="0.112657296">
+        </testcase>
+        <testcase classname="admin/src/App.test.tsx" name="Super Admin shell &gt; keeps later-phase and gated sections visible but inactive" time="0.073611218">
+        </testcase>
+    </testsuite>
+    <testsuite name="seller/src/App.test.tsx" timestamp="2026-10-30T07:43:03.540Z" hostname="runnervm48cm3" tests="3" failures="0" errors="0" skipped="0" time="0.212053329">
+        <testcase classname="seller/src/App.test.tsx" name="Seller Admin shell &gt; anonymous visitors land on the login page, which explains the portal is not active yet" time="0.103411823">
+        </testcase>
+        <testcase classname="seller/src/App.test.tsx" name="Seller Admin shell &gt; an invalid stored token is rejected server-side and cleared" time="0.029199605">
+        </testcase>
+        <testcase classname="seller/src/App.test.tsx" name="Seller Admin shell &gt; a valid session (verified by GET /v1/me) shows the shell with gated finance sections" time="0.07790441">
+        </testcase>
+    </testsuite>
+    <testsuite name="shared/src/components/states.test.tsx" timestamp="2026-10-30T07:43:03.541Z" hostname="runnervm48cm3" tests="3" failures="0" errors="0" skipped="0" time="0.210722034">
+        <testcase classname="shared/src/components/states.test.tsx" name="UI states &gt; error state shows the API title, trace id and retries" time="0.164456304">
+        </testcase>
+        <testcase classname="shared/src/components/states.test.tsx" name="UI states &gt; locked feature names its gate" time="0.007960257">
+        </testcase>
+        <testcase classname="shared/src/components/states.test.tsx" name="UI states &gt; theme toggle switches data-theme on &lt;html&gt;" time="0.036742394">
+        </testcase>
+    </testsuite>
+    <testsuite name="shared/src/lib/api.test.ts" timestamp="2026-10-30T07:43:03.542Z" hostname="runnervm48cm3" tests="4" failures="0" errors="0" skipped="0" time="0.017770269">
+        <testcase classname="shared/src/lib/api.test.ts" name="API client &gt; sends CSRF header on unsafe admin requests only, and credentials" time="0.01028375">
+        </testcase>
+        <testcase classname="shared/src/lib/api.test.ts" name="API client &gt; parses RFC 9457 problems including extension members" time="0.001476807">
+        </testcase>
+        <testcase classname="shared/src/lib/api.test.ts" name="API client &gt; maps network failures to network_error and 401 to the unauthenticated callback" time="0.003430718">
+        </testcase>
+        <testcase classname="shared/src/lib/api.test.ts" name="API client &gt; returns the ETag for optimistic concurrency" time="0.000666609">
+        </testcase>
+    </testsuite>
+    <testsuite name="shared/src/lib/format.test.ts" timestamp="2026-10-30T07:43:03.544Z" hostname="runnervm48cm3" tests="5" failures="0" errors="0" skipped="0" time="0.005844762">
+        <testcase classname="shared/src/lib/format.test.ts" name="Persian formatting &gt; converts digits both ways" time="0.002396441">
+        </testcase>
+        <testcase classname="shared/src/lib/format.test.ts" name="Persian formatting &gt; groups numbers with Persian digits" time="0.000454111">
+        </testcase>
+        <testcase classname="shared/src/lib/format.test.ts" name="Persian formatting &gt; formats integer Rial as Toman without silent rounding" time="0.000738273">
+        </testcase>
+        <testcase classname="shared/src/lib/format.test.ts" name="Persian formatting &gt; formats dates in the Jalali calendar" time="0.000229941">
+        </testcase>
+        <testcase classname="shared/src/lib/format.test.ts" name="Persian formatting &gt; isolates LTR fragments" time="0.000283141">
+        </testcase>
+    </testsuite>
+</testsuites>
