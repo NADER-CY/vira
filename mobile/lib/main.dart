@@ -8,8 +8,8 @@ import 'core/providers.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-  runApp(ProviderScope(
-    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-    child: const ViraApp(),
-  ));
+  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
+  // Restore the refresh token from secure storage before the first route decision.
+  await container.read(sessionProvider).restore();
+  runApp(UncontrolledProviderScope(container: container, child: const ViraApp()));
 }

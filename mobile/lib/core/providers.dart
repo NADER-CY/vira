@@ -3,12 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api/api_client.dart';
+import 'api/repository.dart';
+import 'auth/session.dart';
 import 'config/env.dart';
 
 /// Overridden in main() with the loaded instance; tests override it with mock values.
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) => throw UnimplementedError('override in main'));
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient(baseUrl: Env.apiBaseUrl));
+
+/// Refresh-token storage: Keystore/Keychain on devices, overridden with [MemoryTokenStore] in tests.
+final tokenStoreProvider = Provider<TokenStore>((ref) => const SecureTokenStore());
+
+/// The signed-in session (a ChangeNotifier the router listens to). Restored in main() before the first frame.
+final sessionProvider = Provider<Session>((ref) {
+  final s = Session(api: ref.watch(apiClientProvider), store: ref.watch(tokenStoreProvider), prefs: ref.watch(sharedPreferencesProvider));
+  ref.onDispose(s.dispose);
+  return s;
+});
+
+final repoProvider = Provider<Repo>((ref) => Repo(ref.watch(apiClientProvider)));
 
 /// Light / dark / system theme, persisted on the device (doc 09: both themes are required).
 class ThemeModeNotifier extends Notifier<ThemeMode> {

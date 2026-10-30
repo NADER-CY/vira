@@ -16,6 +16,10 @@ import (
 	"github.com/NADER-CY/vira/backend/internal/app/adminapi"
 	"github.com/NADER-CY/vira/backend/internal/app/publicapi"
 	"github.com/NADER-CY/vira/backend/internal/app/realtime"
+	"github.com/NADER-CY/vira/backend/internal/modules/identity"
+	"github.com/NADER-CY/vira/backend/internal/modules/media"
+	"github.com/NADER-CY/vira/backend/internal/modules/moderation"
+	"github.com/NADER-CY/vira/backend/internal/modules/social"
 	"github.com/NADER-CY/vira/backend/internal/platform/apperr"
 	"github.com/NADER-CY/vira/backend/internal/platform/auth"
 	"github.com/NADER-CY/vira/backend/internal/platform/health"
@@ -84,7 +88,8 @@ func verifier() *auth.Verifier {
 }
 
 func TestPublicRoutesMatchContract(t *testing.T) {
-	r := publicapi.New(publicapi.Deps{Verifier: verifier(), Health: &health.Handler{}})
+	r := publicapi.New(publicapi.Deps{Verifier: verifier(), Health: &health.Handler{}, Identity: &identity.Service{},
+		Social: &social.Service{}, Media: &media.Service{}, Moderation: &moderation.Service{}})
 	diff(t, "public.v1", codeRoutes(r.Routes()), specRoutes(contract(t, "openapi/public.v1.json")))
 }
 

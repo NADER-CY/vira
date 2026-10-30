@@ -60,6 +60,20 @@ type Config struct {
 	AdminCookieSecure bool
 	AllowedOrigins    []string // browser origins allowed by CORS / WebSocket (seller web, admin web)
 
+	// Personal data protection (doc 08): AES-256-GCM key for phone numbers and an HMAC key for their blind
+	// index. 32 random bytes each, base64; held outside the database. Required by api and admin-api.
+	PIIEncKey   []byte
+	PIIIndexKey []byte
+
+	// Object storage for media (S3-compatible: MinIO locally, provider object storage when deployed).
+	S3Bucket    string
+	S3Region    string
+	S3AccessKey string
+	S3SecretKey string
+
+	// SMSDevsimURL is the development SMS simulator (VIRA_PROVIDER_SMS=devsim).
+	SMSDevsimURL string
+
 	// Provider adapters. "mock" is allowed only in development/test (and staging for not-yet-contracted providers).
 	ProviderSMS  string
 	ProviderPSP  string
@@ -92,6 +106,11 @@ func LoadFrom(runtime string, get func(string) string) (*Config, error) {
 		JWTIssuer:         v("VIRA_JWT_ISSUER", "vira"),
 		JWTAudience:       v("VIRA_JWT_AUDIENCE", "vira-api"),
 		ProviderSMS:       v("VIRA_PROVIDER_SMS", "mock"),
+		S3Bucket:          v("VIRA_S3_BUCKET", "vira-media"),
+		S3Region:          v("VIRA_S3_REGION", "us-east-1"),
+		S3AccessKey:       v("VIRA_S3_ACCESS_KEY", ""),
+		S3SecretKey:       v("VIRA_S3_SECRET_KEY", ""),
+		SMSDevsimURL:      v("VIRA_SMS_DEVSIM_URL", "http://localhost:8090"),
 		ProviderPSP:       v("VIRA_PROVIDER_PSP", "simulator"),
 		ProviderPush:      v("VIRA_PROVIDER_PUSH", "mock"),
 	}
@@ -133,6 +152,32 @@ func LoadFrom(runtime string, get func(string) string) (*Config, error) {
 		c.AdminTOTPKey = key
 	}
 
+	for _, k := range []struct {
+		name string
+		dst  *[]byte
+	}{{"VIRA_PII_ENC_KEY", &c.PIIEncKey}, {"VIRA_PII_INDEX_KEY", &c.PIIIndexKey}} {
+		raw := v(k.name, "")
+		if raw == "" {
+			if runtime == "api" || runtime == "admin-api" {
+				errs = append(errs, fmt.Errorf("%s: required for runtime %s", k.name, runtime))
+			}
+			continue
+		}
+		key, err := base64.StdEncoding.DecodeString(raw)
+		if err != nil || len(key) != 32 {
+			errs = append(errs, fmt.Errorf("%s: must be base64 of exactly 32 bytes", k.name))
+		}
+		*k.dst = key
+	}
+	if len(c.PIIEncKey) > 0 && string(c.PIIEncKey) == string(c.PIIIndexKey) {
+		errs = append(errs, errors.New("VIRA_PII_ENC_KEY and VIRA_PII_INDEX_KEY must differ"))
+	}
+	switch c.ProviderSMS {
+	case "mock", "devsim":
+	default:
+		errs = append(errs, fmt.Errorf("VIRA_PROVIDER_SMS: unknown provider %q (mock, devsim; real providers are added when contracted)", c.ProviderSMS))
+	}
+
 	if needsDB(runtime) && c.DatabaseURL == "" {
 		errs = append(errs, fmt.Errorf("%s: required for runtime %s", dbVar(runtime), runtime))
 	}
@@ -155,7 +200,7 @@ func (c *Config) validateDeployed() []error {
 	var errs []error
 	if c.Env == EnvProduction {
 		for name, val := range map[string]string{"VIRA_PROVIDER_SMS": c.ProviderSMS, "VIRA_PROVIDER_PSP": c.ProviderPSP, "VIRA_PROVIDER_PUSH": c.ProviderPush} {
-			if val == "mock" || val == "simulator" {
+			if val == "mock" || val == "simulator" || val == "devsim" {
 				errs = append(errs, fmt.Errorf("%s=%s is not allowed in production", name, val))
 			}
 		}

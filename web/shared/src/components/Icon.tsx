@@ -32,6 +32,18 @@ import smartToy from "@material-symbols/svg-400/outlined/smart_toy.svg?raw";
 import storefront from "@material-symbols/svg-400/outlined/storefront.svg?raw";
 import verifiedUser from "@material-symbols/svg-400/outlined/verified_user.svg?raw";
 import videoLibrary from "@material-symbols/svg-400/outlined/video_library.svg?raw";
+import checkCircle from "@material-symbols/svg-400/outlined/check_circle.svg?raw";
+import chevronRight from "@material-symbols/svg-400/outlined/chevron_right.svg?raw";
+import close from "@material-symbols/svg-400/outlined/close.svg?raw";
+import devices from "@material-symbols/svg-400/outlined/devices.svg?raw";
+import filterAltOff from "@material-symbols/svg-400/outlined/filter_alt_off.svg?raw";
+import gavel from "@material-symbols/svg-400/outlined/gavel.svg?raw";
+import howToReg from "@material-symbols/svg-400/outlined/how_to_reg.svg?raw";
+import person from "@material-symbols/svg-400/outlined/person.svg?raw";
+import personOff from "@material-symbols/svg-400/outlined/person_off.svg?raw";
+import report from "@material-symbols/svg-400/outlined/report.svg?raw";
+import visibility from "@material-symbols/svg-400/outlined/visibility.svg?raw";
+import warning from "@material-symbols/svg-400/outlined/warning.svg?raw";
 
 const icons = {
   account_balance_wallet: accountBalanceWallet, admin_panel_settings: adminPanelSettings, assignment_return: assignmentReturn,
@@ -39,12 +51,13 @@ const icons = {
   inbox, inventory_2: inventory2, light_mode: lightMode, local_shipping: localShipping, lock, logout, monitoring,
   notifications, payments, receipt_long: receiptLong, refresh, search, sell, settings, shield_lock: shieldLock,
   shopping_bag: shoppingBag, smart_toy: smartToy, storefront, verified_user: verifiedUser, video_library: videoLibrary,
+  check_circle: checkCircle, chevron_right: chevronRight, close, devices, filter_alt_off: filterAltOff, gavel, how_to_reg: howToReg, person, person_off: personOff, report, visibility, warning,
 } as const;
 
 export type IconName = keyof typeof icons;
 
 /** Icons whose meaning is directional are mirrored in RTL (DS-06). */
-const MIRROR: ReadonlySet<IconName> = new Set<IconName>(["chevron_left", "logout", "assignment_return"]);
+const MIRROR: ReadonlySet<IconName> = new Set<IconName>(["chevron_left", "chevron_right", "logout", "assignment_return"]);
 
 export function Icon({ name, label, className }: { name: IconName; label?: string; className?: string }) {
   return (

@@ -30,11 +30,14 @@ import (
 
 // Principal is the authenticated caller.
 type Principal struct {
-	Subject string    `json:"sub"`  // user id
-	Kind    string    `json:"kind"` // user (admin realm is separate, package adminauth)
-	Scopes  []string  `json:"scopes,omitempty"`
-	TokenID string    `json:"-"`
-	Expires time.Time `json:"-"`
+	Subject string   `json:"sub"`  // user id
+	Kind    string   `json:"kind"` // user (admin realm is separate, package adminauth)
+	Scopes  []string `json:"scopes,omitempty"`
+	// SessionID identifies the server-side session (identity.sessions) the token was issued for; middleware in
+	// the identity module rejects tokens whose session was revoked, so logout and suspension take effect at once.
+	SessionID string    `json:"-"`
+	TokenID   string    `json:"-"`
+	Expires   time.Time `json:"-"`
 }
 
 // HasScope reports whether the principal carries scope s.
@@ -71,6 +74,7 @@ type Claims struct {
 	ID        string   `json:"jti"`
 	Kind      string   `json:"kind"`
 	Scopes    []string `json:"scp,omitempty"`
+	SessionID string   `json:"sid,omitempty"`
 }
 
 // Signer issues ES256 tokens.
@@ -103,13 +107,18 @@ func KeyID(pub *ecdsa.PublicKey) string {
 
 // Issue creates an access token for subject.
 func (s *Signer) Issue(subject, kind string, scopes []string) (string, Claims, error) {
+	return s.IssueForSession(subject, kind, "", scopes)
+}
+
+// IssueForSession creates an access token bound to a server-side session.
+func (s *Signer) IssueForSession(subject, kind, sessionID string, scopes []string) (string, Claims, error) {
 	now := time.Now
 	if s.Now != nil {
 		now = s.Now
 	}
 	t := now().UTC()
 	c := Claims{Issuer: s.Issuer, Subject: subject, Audience: s.Audience, IssuedAt: t.Unix(), NotBefore: t.Unix(),
-		Expires: t.Add(s.TTL).Unix(), ID: ids.New(), Kind: kind, Scopes: scopes}
+		Expires: t.Add(s.TTL).Unix(), ID: ids.New(), Kind: kind, Scopes: scopes, SessionID: sessionID}
 	hdr, _ := json.Marshal(map[string]string{"alg": "ES256", "typ": "JWT", "kid": s.KeyID})
 	body, err := json.Marshal(c)
 	if err != nil {
@@ -209,7 +218,8 @@ func (v *Verifier) Middleware(required bool) httpx.Middleware {
 				httpx.WriteError(w, r, apperr.New(apperr.Unauthenticated, ""))
 				return
 			}
-			p := Principal{Subject: c.Subject, Kind: c.Kind, Scopes: c.Scopes, TokenID: c.ID, Expires: time.Unix(c.Expires, 0)}
+			p := Principal{Subject: c.Subject, Kind: c.Kind, Scopes: c.Scopes, SessionID: c.SessionID, TokenID: c.ID,
+				Expires: time.Unix(c.Expires, 0)}
 			next.ServeHTTP(w, r.WithContext(WithPrincipal(r.Context(), p)))
 		})
 	}

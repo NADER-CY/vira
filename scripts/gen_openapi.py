@@ -6,10 +6,14 @@ Edit this file, run `python3 scripts/gen_openapi.py`, commit both. CI fails if t
 """
 import json, os, sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import openapi_p2  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CODES = ["validation_failed", "unauthenticated", "forbidden", "not_found", "method_not_allowed", "conflict",
          "idempotency_conflict", "request_in_progress", "precondition_failed", "precondition_required", "rate_limited",
-         "feature_disabled", "feature_locked", "account_restricted", "mfa_required", "mfa_invalid", "maintenance",
+         "feature_disabled", "feature_locked", "account_restricted", "mfa_required", "mfa_invalid", "otp_invalid",
+         "otp_expired", "otp_locked", "maintenance",
          "upgrade_required", "internal_error", "service_unavailable"]
 
 def ref(name): return {"$ref": f"#/components/schemas/{name}"}
@@ -72,10 +76,11 @@ def public():
     schemas["Me"] = {"type": "object", "required": ["subject", "kind"], "properties": {
         "subject": {"type": "string"}, "kind": {"type": "string"},
         "scopes": {"type": ["array", "null"], "items": {"type": "string"}}, "expires_at": {"type": "string", "format": "date-time"}}}
+    openapi_p2.public_paths(paths, schemas)
     return {
         "openapi": "3.1.0",
-        "info": {"title": "VIRA Public API", "version": "1.0.0-phase1",
-                 "description": "Mobile app and seller web API (doc 07). Phase 1: platform surface only. "
+        "info": {"title": "VIRA Public API", "version": "1.0.0-phase2",
+                 "description": "Mobile app and seller web API (doc 07). Phase 2: identity, profiles, social graph, posts, feed, engagement, media, reports. "
                                 "Unsafe methods accept Idempotency-Key; money is integer Rial."},
         "servers": [{"url": "http://localhost:8080", "description": "local development"}],
         "paths": paths,
@@ -165,9 +170,10 @@ def admin():
         "time": {"type": "string", "format": "date-time"}, "readiness": ref("Readiness"),
         "regulated_capabilities": {"type": "array", "items": {"type": "object", "required": ["key", "gate", "state"], "properties": {
             "key": {"type": "string"}, "gate": {"type": "string"}, "state": {"type": "string", "enum": ["locked_off"]}}}}}}
+    openapi_p2.admin_paths(paths, s)
     return {
         "openapi": "3.1.0",
-        "info": {"title": "VIRA Super Admin API", "version": "1.0.0-phase1",
+        "info": {"title": "VIRA Super Admin API", "version": "1.0.0-phase2",
                  "description": "Separate binary, DB role and auth realm (ADR-016). Cookie session + mandatory TOTP. "
                                 "State-changing requests require the X-VIRA-CSRF: 1 header."},
         "servers": [{"url": "http://localhost:8081", "description": "local development"}],

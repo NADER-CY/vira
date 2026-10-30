@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/NADER-CY/vira/backend/internal/app/adminapi"
+	"github.com/NADER-CY/vira/backend/internal/modules/identity"
+	"github.com/NADER-CY/vira/backend/internal/modules/moderation"
 	"github.com/NADER-CY/vira/backend/internal/platform/adminauth"
 	"github.com/NADER-CY/vira/backend/internal/platform/db"
 	"github.com/NADER-CY/vira/backend/internal/platform/health"
@@ -35,7 +37,9 @@ func newEnv(t *testing.T) *env {
 	e.svc = &adminauth.Service{Pool: d.Pool("app_admin"), TOTPKey: bytes.Repeat([]byte{1}, 32),
 		SessionTTL: 8 * time.Hour, IdleTimeout: 15 * time.Minute, Now: func() time.Time { return e.now }}
 	deps := adminapi.Deps{Pool: d.Pool("app_admin"), Auth: e.svc, Health: &health.Handler{Service: "admin-api"},
-		Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Version: "test", Env: "test"}
+		Log: slog.New(slog.NewTextHandler(io.Discard, nil)), Version: "test", Env: "test",
+		Users:      &identity.AdminService{Pool: d.Pool("app_admin"), PII: testPII},
+		Moderation: &moderation.Service{Pool: d.Pool("app_admin")}}
 	e.srv = httptest.NewServer(adminapi.Handler(deps, adminapi.New(deps)))
 	t.Cleanup(e.srv.Close)
 	return e
@@ -118,7 +122,7 @@ func TestFullLoginFlowAndPermissions(t *testing.T) {
 	}
 	e.login(t, c, "root@vira.test", enr, 0)
 	st, me, _ := c.do("GET", "/v1/auth/me", nil, nil)
-	if st != 200 || me["email"] != "root@vira.test" || len(me["permissions"].([]any)) != 6 {
+	if st != 200 || me["email"] != "root@vira.test" || len(me["permissions"].([]any)) != 10 {
 		t.Fatalf("me: %d %v", st, me)
 	}
 

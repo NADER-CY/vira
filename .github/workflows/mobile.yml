@@ -26,6 +26,9 @@ jobs:
       - name: Generated design tokens are up to date
         working-directory: .
         run: .github/scripts/run.sh tokens python3 scripts/gen_tokens.py --check
+      - name: Icon subset matches the symbol list
+        working-directory: .
+        run: .github/scripts/run.sh symbols python3 scripts/gen_symbols.py --check
       - uses: actions/setup-java@v5
         with:
           distribution: temurin

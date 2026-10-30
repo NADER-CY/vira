@@ -24,6 +24,13 @@ type Pool = pgxpool.Pool
 // Tx is the transaction handle passed to transactional functions.
 type Tx = pgx.Tx
 
+// Querier is satisfied by both Tx and Pool (read helpers that may run inside or outside a transaction).
+type Querier interface {
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+}
+
 // Options configures a pool.
 type Options struct {
 	URL       string

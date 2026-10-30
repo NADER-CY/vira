@@ -29,6 +29,9 @@ const (
 	MFAInvalid           Code = "mfa_invalid"
 	Maintenance          Code = "maintenance"
 	UpgradeRequired      Code = "upgrade_required"
+	OTPInvalid           Code = "otp_invalid"
+	OTPExpired           Code = "otp_expired"
+	OTPLocked            Code = "otp_locked"
 	Internal             Code = "internal_error"
 	Unavailable          Code = "service_unavailable"
 )
@@ -57,6 +60,9 @@ var registry = map[Code]meta{
 	MFAInvalid:           {http.StatusUnauthorized, "کد تأیید نادرست یا منقضی است."},
 	Maintenance:          {http.StatusServiceUnavailable, "سرویس در حال به‌روزرسانی است."},
 	UpgradeRequired:      {http.StatusUpgradeRequired, "لطفاً برنامه را به‌روزرسانی کنید."},
+	OTPInvalid:           {http.StatusUnauthorized, "کد تأیید درست نیست."},
+	OTPExpired:           {http.StatusUnauthorized, "کد تأیید منقضی شده است؛ کد جدید بگیرید."},
+	OTPLocked:            {http.StatusTooManyRequests, "تلاش‌های ناموفق زیاد بود؛ کد جدید بگیرید."},
 	Internal:             {http.StatusInternalServerError, "خطای غیرمنتظره‌ای رخ داد."},
 	Unavailable:          {http.StatusServiceUnavailable, "سرویس موقتاً در دسترس نیست."},
 }

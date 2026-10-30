@@ -58,3 +58,6 @@ web/test-results/
 /evidence/
 *.iml
 mobile/test/failures/
+
+__pycache__/
+*.pyc

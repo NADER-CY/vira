@@ -142,6 +142,10 @@ func main() {
 	check("SMS simulator inbox shows it", code == 200 && len(items) > 0 &&
 		slices.ContainsFunc(items, func(i any) bool { return i.(map[string]any)["body"] == "smoke" }), raw)
 
+	if pid, ok := phase2(api, devsim); ok {
+		phase2Admin(admin, pid)
+	}
+
 	fmt.Printf("smoke: %d passed, %d failed\n", passes, failures)
 	if os.Getenv("GITHUB_ACTIONS") == "true" {
 		fmt.Printf("::notice title=dev-stack smoke::%d passed, %d failed\n", passes, failures)

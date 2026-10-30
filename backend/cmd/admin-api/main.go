@@ -16,6 +16,9 @@ import (
 
 	"github.com/NADER-CY/vira/backend/internal/app/adminapi"
 	"github.com/NADER-CY/vira/backend/internal/app/runtime"
+	"github.com/NADER-CY/vira/backend/internal/modules/identity"
+	idc "github.com/NADER-CY/vira/backend/internal/modules/identity/contract"
+	"github.com/NADER-CY/vira/backend/internal/modules/moderation"
 	"github.com/NADER-CY/vira/backend/internal/platform/adminauth"
 	"github.com/NADER-CY/vira/backend/internal/platform/health"
 )
@@ -46,6 +49,8 @@ func main() {
 		AllowedOrigins: cfg.AllowedOrigins,
 		Version:        runtime.Version,
 		Env:            string(cfg.Env),
+		Users:          &identity.AdminService{Pool: pool, PII: idc.PII{EncKey: cfg.PIIEncKey, IndexKey: cfg.PIIIndexKey}},
+		Moderation:     &moderation.Service{Pool: pool, Log: log},
 	}
 	if err := runtime.Serve(ctx, log, cfg.HTTPAddr, adminapi.Handler(deps, adminapi.New(deps))); err != nil {
 		log.Error("server", "err", err)

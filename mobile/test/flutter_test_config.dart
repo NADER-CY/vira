@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Loads the real fonts (Vazirmatn + Material Icons) so golden images show actual Persian text and icons
+/// Loads the real fonts (Vazirmatn, Material Symbols, Material Icons) so golden images show actual Persian text and icons
 /// instead of the test font's boxes.
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +13,9 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
     vazir.addFont(rootBundle.load('assets/fonts/Vazirmatn-$w.ttf'));
   }
   await vazir.load();
+  // The archive's icon font (variable Material Symbols Outlined, bundled subset).
+  final symbols = FontLoader('MaterialSymbolsOutlined')..addFont(rootBundle.load('assets/fonts/MaterialSymbolsOutlined.ttf'));
+  await symbols.load();
   final root = Platform.environment['FLUTTER_ROOT'];
   final icons = File('$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf');
   if (root != null && icons.existsSync()) {

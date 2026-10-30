@@ -6,19 +6,21 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { FlagsPage } from "./pages/FlagsPage";
 import { AuditPage } from "./pages/AuditPage";
 import { RolesPage } from "./pages/RolesPage";
+import { UsersPage } from "./pages/UsersPage";
+import { ModerationPage } from "./pages/ModerationPage";
 
 // Single sidebar replacing the archive's 46 variants (doc 09 §4.2). Items of later phases are visible but
 // inactive and labelled with their phase or gate — nothing on the roadmap is silently removed.
 export const adminNav: NavGroup[] = [
   { items: [{ label: "داشبورد", icon: "dashboard", to: "/" }] },
   { title: "کاربران و اعتماد", items: [
-    { label: "کاربران", icon: "group", to: "/users", phase: "فاز ۲" },
+    { label: "کاربران", icon: "group", to: "/users" },
     { label: "احراز هویت و KYC", icon: "verified_user", to: "/kyc", phase: "فاز ۴" },
     { label: "فروشندگان", icon: "storefront", to: "/sellers", phase: "فاز ۴" },
   ] },
   { title: "محتوا", items: [
     { label: "پست‌ها و ویدیوها", icon: "video_library", to: "/content", phase: "فاز ۳" },
-    { label: "گزارش‌ها و نظرات", icon: "block", to: "/moderation", phase: "فاز ۲" },
+    { label: "گزارش‌ها و نظرات", icon: "block", to: "/moderation" },
   ] },
   { title: "تجارت", items: [
     { label: "محصولات و دسته‌ها", icon: "inventory_2", to: "/catalog", phase: "فاز ۴" },
@@ -65,6 +67,8 @@ function Shell() {
     >
       <Routes>
         <Route index element={<DashboardPage />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="moderation" element={<ModerationPage />} />
         <Route path="flags" element={<FlagsPage />} />
         <Route path="audit" element={<AuditPage />} />
         <Route path="roles" element={<RolesPage />} />

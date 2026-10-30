@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/NADER-CY/vira/backend/internal/modules/identity"
+	"github.com/NADER-CY/vira/backend/internal/modules/moderation"
 	"github.com/NADER-CY/vira/backend/internal/platform/adminauth"
 	"github.com/NADER-CY/vira/backend/internal/platform/apperr"
 	"github.com/NADER-CY/vira/backend/internal/platform/audit"
@@ -38,6 +40,8 @@ type Deps struct {
 	AllowedOrigins []string
 	Version        string
 	Env            string
+	Users          *identity.AdminService
+	Moderation     *moderation.Service
 }
 
 // New builds the admin router.
@@ -57,6 +61,7 @@ func New(d Deps) *httpx.Router {
 	r.HandleFunc(http.MethodGet, "/v1/admin/config", a.listConfig, authn, perm("config.read"))
 	r.HandleFunc(http.MethodGet, "/v1/admin/audit-events", a.listAudit, authn, perm("audit.read"))
 	r.HandleFunc(http.MethodGet, "/v1/admin/roles", a.listRoles, authn, perm("admins.read"))
+	a.routesP2(r)
 	return r
 }
 
