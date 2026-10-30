@@ -53,9 +53,12 @@ void main() {
       await tester.enterText(find.byKey(const Key('phone')), '09123456789');
       for (final k in ['consent-terms', 'consent-privacy', 'consent-age']) {
         await tester.scrollUntilVisible(find.byKey(Key(k)), 200, scrollable: find.byType(Scrollable).first);
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(Key(k)));
       }
+      await tester.pump();
       await tester.scrollUntilVisible(find.byKey(const Key('welcome-submit')), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('welcome-submit')));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('otp-input')), '48');

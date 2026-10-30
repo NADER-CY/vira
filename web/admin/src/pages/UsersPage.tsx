@@ -28,9 +28,9 @@ export function StatusBadge({ status }: { status: string }) {
 
 /** Two-letter avatar from the display name (archive: coloured initials tile). */
 export function initials(name: string, handle: string): string {
-  const parts = (name || handle).trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "؟";
-  return parts.length === 1 ? parts[0].slice(0, 2) : parts[0][0] + parts[1][0];
+  const [a = "", b = ""] = (name || handle).trim().split(/\s+/).filter(Boolean);
+  if (!a) return "؟";
+  return b ? a.slice(0, 1) + b.slice(0, 1) : a.slice(0, 2);
 }
 
 export function UsersPage() {

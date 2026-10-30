@@ -121,7 +121,7 @@ export function UserPanel({ id, onClose, onChanged }: { id: string; onClose: () 
                     <label htmlFor="user-next-status">وضعیت جدید</label>
                     <select id="user-next-status" className="v-select" value={next} onChange={(e) => setNext(e.target.value)} required>
                       <option value="">انتخاب کنید…</option>
-                      {["active", "restricted", "suspended"].filter((k) => k !== u.status).map((k) => <option key={k} value={k}>{statusLabel[k].label}</option>)}
+                      {["active", "restricted", "suspended"].filter((k) => k !== u.status).map((k) => <option key={k} value={k}>{statusLabel[k]?.label ?? k}</option>)}
                     </select>
                   </div>
                   <div className="v-field">
